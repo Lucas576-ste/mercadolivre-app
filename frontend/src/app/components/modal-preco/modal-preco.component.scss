@@ -1,0 +1,136 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 320px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.titulo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+
+.linha-amarela {
+  width: 36px;
+  height: 3px;
+  background: #FFE600;
+  margin-bottom: 20px;
+}
+
+.campo {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-disabled {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #374151;
+  background: #fff;
+  cursor: not-allowed;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.preco-wrapper {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus-within {
+    border-color: #FFE600;
+    box-shadow: 0 0 0 3px rgba(255, 230, 0, 0.15);
+  }
+}
+
+.preco-prefix {
+  padding: 12px 10px 12px 14px;
+  color: #6b7280;
+  font-size: 14px;
+  border-right: 1px solid #e5e7eb;
+  background: #f9fafb;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.preco-input {
+  border: none;
+  outline: none;
+  padding: 12px 14px;
+  flex: 1;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a1a2e;
+
+  &::placeholder { color: #9ca3af; }
+}
+
+.msg-erro {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 6px;
+}
+
+.botoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.btn-cancelar {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+
+  &:hover { background: #f9fafb; }
+}
+
+.btn-confirmar {
+  flex: 1;
+  padding: 14px;
+  background: #FFE600;
+  color: #1a1a2e;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) { background: #f0d800; }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+}

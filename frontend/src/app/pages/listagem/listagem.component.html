@@ -1,0 +1,182 @@
+<app-navbar />
+
+<div class="min-h-screen bg-[#F5F5F5] font-sans">
+  <div class="max-w-[1200px] mx-auto px-8 py-6">
+
+    <h1 class="text-[28px] font-bold text-[#1a1a2e] mb-5">Meus Anúncios</h1>
+
+    <!-- Barra de ações -->
+    <div class="bg-white rounded-[10px] px-4 py-[14px] flex items-center gap-3 flex-wrap"
+         style="box-shadow: 0 2px 8px rgba(0,0,0,0.05)">
+
+      <!-- Busca -->
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]"></i>
+        <input type="text" [(ngModel)]="termoBusca" (ngModelChange)="onBuscaChange()"
+               placeholder="Buscar por título"
+               class="pl-9 pr-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px] w-[280px]
+                      outline-none focus:border-[#FFE600] transition-colors" />
+      </div>
+
+      <!-- Status -->
+      <select [(ngModel)]="statusFiltro" (change)="onFiltroChange()"
+              class="w-[130px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
+                     bg-white cursor-pointer outline-none focus:border-[#FFE600] transition-colors">
+        <option value="">Todos</option>
+        <option value="active">Ativo</option>
+        <option value="paused">Pausado</option>
+        <option value="closed">Fechado</option>
+      </select>
+
+      <!-- Categoria -->
+      <select [(ngModel)]="categoriaFiltro" (change)="onFiltroChange()"
+              class="w-[160px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
+                     bg-white cursor-pointer outline-none focus:border-[#FFE600] transition-colors">
+        <option value="" disabled selected>Categorias</option>
+        <option value="">Todas</option>
+        <option value="eletronicos">Eletrônicos</option>
+        <option value="esportes">Esportes</option>
+        <option value="casa-jardim">Casa e Jardim</option>
+        <option value="moda">Moda</option>
+        <option value="veiculos">Veículos</option>
+        <option value="outros">Outros</option>
+      </select>
+
+      <!-- Sincronizar -->
+      <button (click)="sincronizar()" [disabled]="sincronizando"
+              class="flex items-center gap-[6px] px-4 py-[10px] bg-white border border-[#e5e7eb]
+                     rounded-lg text-[14px] font-medium text-[#374151] cursor-pointer
+                     hover:bg-[#f9fafb] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-rotate text-[#6b7280]" [class.fa-spin]="sincronizando"></i>
+        {{ sincronizando ? 'Sincronizando...' : 'Sincronizar com ML' }}
+      </button>
+
+      <!-- Novo Anúncio -->
+      <button (click)="router.navigate(['/anuncios/novo'])"
+              class="flex items-center gap-[6px] px-[18px] py-[10px] bg-[#FFE600] text-[#1a1a2e]
+                     font-semibold text-[14px] rounded-lg border-none cursor-pointer ml-auto
+                     hover:bg-[#f0d800] transition-colors">
+        <i class="fa-solid fa-plus"></i>
+        Novo Anúncio
+      </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-[10px] mt-4 overflow-x-auto"
+         style="box-shadow: 0 2px 8px rgba(0,0,0,0.05)">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="border-b-2 border-[#f3f4f6]">
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em]">Título</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[160px]">Categoria</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[140px]">Preço</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[100px]">Estoque</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[120px]">Status</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[100px]">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Skeleton -->
+          @if (carregando) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="border-b border-[#f9fafb]">
+                @for (j of [1,2,3,4,5,6]; track j) {
+                  <td class="px-4 py-[14px]">
+                    <div class="h-4 bg-[#f3f4f6] rounded animate-pulse" [style.width]="j === 1 ? '80%' : '60%'"></div>
+                  </td>
+                }
+              </tr>
+            }
+          } @else if (anuncios.length === 0) {
+            <tr>
+              <td colspan="6" class="py-12 text-center">
+                <i class="fa-solid fa-box-open text-[48px] text-[#d1d5db] block mb-3"></i>
+                <p class="text-[16px] text-[#6b7280]">Nenhum anúncio encontrado</p>
+              </td>
+            </tr>
+          } @else {
+            @for (a of anuncios; track a._id) {
+              <tr class="border-b border-[#f9fafb] hover:bg-[#fafafa] transition-colors duration-100">
+                <td class="px-4 py-[14px] text-[14px] font-medium text-[#1a1a2e]">{{ a.titulo }}</td>
+                <td class="px-4 py-[14px] text-[14px] text-[#6b7280]">{{ labelCategoria(a.categoria) }}</td>
+                <td class="px-4 py-[14px] text-[14px] font-medium text-[#1a1a2e]">{{ formatarPreco(a.preco) }}</td>
+                <td class="px-4 py-[14px] text-[14px] text-[#374151]">{{ a.estoque }}</td>
+                <td class="px-4 py-[14px]">
+                  @if (a.status === 'active') {
+                    <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#dcfce7] text-[#16a34a]">Ativo</span>
+                  } @else if (a.status === 'paused') {
+                    <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#f3f4f6] text-[#6b7280]">Pausado</span>
+                  } @else {
+                    <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#fee2e2] text-[#dc2626]">Fechado</span>
+                  }
+                </td>
+                <td class="px-4 py-[14px]">
+                  <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-pen text-[14px] text-[#6b7280] cursor-pointer p-1
+                               hover:text-[#374151] transition-colors"
+                       (click)="router.navigate(['/anuncios', a._id, 'editar'])"></i>
+                    <i class="fa-solid fa-tag text-[14px] text-[#16a34a] cursor-pointer p-1
+                               hover:text-[#15803d] transition-colors"
+                       (click)="abrirModalPreco(a)"></i>
+                    <i class="fa-solid fa-box text-[14px] text-[#3B82F6] cursor-pointer p-1
+                               hover:text-[#1d4ed8] transition-colors"
+                       (click)="abrirModalEstoque(a)"></i>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+
+        </tbody>
+      </table>
+
+      <!-- Rodapé paginação -->
+      @if (!carregando && total > 0) {
+        <div class="px-4 py-[14px] border-t border-[#f3f4f6] flex justify-between items-center">
+          <span class="text-[13px] text-[#6b7280]">
+            Mostrando {{ inicio }} até {{ fim }} de {{ total }} resultados
+          </span>
+          <div class="flex items-center gap-1">
+            <button (click)="irParaPagina(paginaAtual - 1)" [disabled]="paginaAtual === 1"
+                    class="w-8 h-8 flex items-center justify-center border border-[#e5e7eb] rounded-md
+                           text-[#374151] bg-white hover:bg-[#f9fafb] transition-colors
+                           disabled:opacity-40 disabled:cursor-not-allowed text-[13px]">‹</button>
+
+            @for (p of paginas; track $index) {
+              @if (p === '...') {
+                <span class="px-1 text-[#9ca3af] text-[13px]">...</span>
+              } @else {
+                <button (click)="irParaPagina(p)"
+                        class="w-8 h-8 flex items-center justify-center rounded-md text-[13px] font-medium transition-colors"
+                        [class]="p === paginaAtual
+                          ? 'bg-[#FFE600] text-[#1a1a2e] border-none'
+                          : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'">
+                  {{ p }}
+                </button>
+              }
+            }
+
+            <button (click)="irParaPagina(paginaAtual + 1)" [disabled]="paginaAtual === totalPaginas"
+                    class="w-8 h-8 flex items-center justify-center border border-[#e5e7eb] rounded-md
+                           text-[#374151] bg-white hover:bg-[#f9fafb] transition-colors
+                           disabled:opacity-40 disabled:cursor-not-allowed text-[13px]">›</button>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>
+
+<!-- Modais -->
+@if (anuncioModalPreco) {
+  <app-modal-preco [anuncio]="anuncioModalPreco"
+                   (fechar)="anuncioModalPreco = null"
+                   (salvo)="onModalPrecoSalvo()" />
+}
+@if (anuncioModalEstoque) {
+  <app-modal-estoque [anuncio]="anuncioModalEstoque"
+                     (fechar)="anuncioModalEstoque = null"
+                     (salvo)="onModalEstoqueSalvo()" />
+}

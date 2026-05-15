@@ -1,0 +1,203 @@
+<app-navbar />
+
+<div class="min-h-screen bg-[#F5F5F5] font-sans">
+  <div class="max-w-[1200px] mx-auto px-8 py-6">
+
+    <!-- Voltar -->
+    <a routerLink="/anuncios"
+       class="inline-block text-[14px] text-[#6b7280] no-underline cursor-pointer mb-2
+              hover:text-[#374151] transition-colors">
+      ← Voltar para listagem
+    </a>
+
+    <!-- Título -->
+    <h1 class="text-[28px] font-bold text-[#1a1a2e] mb-6">
+      {{ editando ? 'Editar Anúncio' : 'Novo Anúncio' }}
+    </h1>
+
+    <!-- Skeleton de carregamento -->
+    @if (carregando) {
+      <div class="bg-white rounded-xl p-8 animate-pulse" style="box-shadow: 0 2px 12px rgba(0,0,0,0.06)">
+        <div class="grid grid-cols-2 gap-6">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div>
+              <div class="h-3 bg-gray-200 rounded w-1/3 mb-3"></div>
+              <div class="h-10 bg-gray-100 rounded w-full"></div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+        <div class="bg-white rounded-xl p-8" style="box-shadow: 0 2px 12px rgba(0,0,0,0.06)">
+
+          <div class="grid gap-6 form-grid">
+
+            <!-- ── COLUNA ESQUERDA ── -->
+            <div class="flex flex-col">
+
+              <!-- Título -->
+              <div>
+                <label class="field-label">Título do Anúncio</label>
+                <input
+                  type="text"
+                  formControlName="titulo"
+                  placeholder="Ex: iPhone 13 Pro Max 256GB Azul Sierra"
+                  class="field-input"
+                  [class.border-red-400]="form.get('titulo')?.invalid && form.get('titulo')?.touched"
+                />
+                @if (form.get('titulo')?.invalid && form.get('titulo')?.touched) {
+                  <p class="text-red-500 text-[12px] -mt-4 mb-4">Título é obrigatório.</p>
+                }
+              </div>
+
+              <!-- Descrição -->
+              <div>
+                <label class="field-label">Descrição</label>
+                <textarea
+                  formControlName="descricao"
+                  placeholder="Descreva detalhes do produto, estado de conservação, especificações técnicas..."
+                  class="field-input resize-y"
+                  style="height: 160px"
+                ></textarea>
+              </div>
+
+              <!-- Categoria -->
+              <div>
+                <label class="field-label">Categoria</label>
+                <select
+                  formControlName="categoria"
+                  class="field-input"
+                  [class.border-red-400]="form.get('categoria')?.invalid && form.get('categoria')?.touched"
+                >
+                  <option value="" disabled>Selecione uma categoria</option>
+                  <option value="eletronicos">Eletrônicos</option>
+                  <option value="esportes">Esportes</option>
+                  <option value="casa-jardim">Casa e Jardim</option>
+                  <option value="moda">Moda</option>
+                  <option value="veiculos">Veículos</option>
+                  <option value="outros">Outros</option>
+                </select>
+                @if (form.get('categoria')?.invalid && form.get('categoria')?.touched) {
+                  <p class="text-red-500 text-[12px] -mt-4 mb-4">Selecione uma categoria.</p>
+                }
+              </div>
+
+              <!-- Condição -->
+              <div>
+                <label class="field-label">Condição</label>
+                <div class="flex items-center gap-5">
+                  <label class="flex items-center gap-2 text-[14px] text-[#374151] cursor-pointer">
+                    <input type="radio" formControlName="condicao" value="novo" class="accent-[#FFE600]" />
+                    Novo
+                  </label>
+                  <label class="flex items-center gap-2 text-[14px] text-[#374151] cursor-pointer">
+                    <input type="radio" formControlName="condicao" value="usado" class="accent-[#FFE600]" />
+                    Usado
+                  </label>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ── COLUNA DIREITA ── -->
+            <div class="flex flex-col">
+
+              <!-- Preço -->
+              <div>
+                <label class="field-label">Preço</label>
+                <div class="preco-wrapper"
+                     [class.focused]="form.get('preco')?.touched"
+                     [class.!border-red-400]="form.get('preco')?.invalid && form.get('preco')?.touched">
+                  <span class="preco-prefix">R$</span>
+                  <input
+                    type="number"
+                    formControlName="preco"
+                    placeholder="0,00"
+                    min="0.01"
+                    step="0.01"
+                    class="preco-input"
+                  />
+                </div>
+                @if (form.get('preco')?.invalid && form.get('preco')?.touched) {
+                  <p class="text-red-500 text-[12px] mt-1 mb-4">Informe um preço válido.</p>
+                }
+              </div>
+
+              <!-- Estoque -->
+              <div>
+                <label class="field-label">Quantidade em Estoque</label>
+                <input
+                  type="number"
+                  formControlName="estoque"
+                  placeholder="1"
+                  min="0"
+                  class="field-input"
+                  [class.border-red-400]="form.get('estoque')?.invalid && form.get('estoque')?.touched"
+                />
+                @if (form.get('estoque')?.invalid && form.get('estoque')?.touched) {
+                  <p class="text-red-500 text-[12px] -mt-4 mb-4">Informe a quantidade.</p>
+                }
+              </div>
+
+              <!-- Fotos -->
+              <div formArrayName="fotos">
+                <label class="field-label">URLs das Fotos</label>
+                <div class="flex flex-col gap-[10px] mb-5">
+                  @for (ctrl of fotos.controls; track $index) {
+                    <input
+                      type="text"
+                      [formControlName]="$index"
+                      [placeholder]="fotosPlaceholders[$index]"
+                      class="field-input !mb-0"
+                    />
+                  }
+                </div>
+                <button
+                  type="button"
+                  (click)="adicionarFoto()"
+                  class="text-[#3B82F6] text-[13px] cursor-pointer bg-transparent border-none p-0
+                         hover:text-[#1d4ed8] transition-colors"
+                >
+                  + Adicionar mais
+                </button>
+              </div>
+
+            </div>
+
+            <!-- ── RODAPÉ (ocupa as 2 colunas) ── -->
+            <div class="col-span-full flex flex-col gap-3 mt-2 pt-6 border-t border-[#f3f4f6]">
+              @if (erro) {
+                <p class="text-red-500 text-[13px] text-right">{{ erro }}</p>
+              }
+              <div class="flex justify-end gap-3">
+                <button
+                  type="button"
+                  (click)="cancelar()"
+                  class="btn-cancelar"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="salvando"
+                  class="btn-salvar"
+                  [class.opacity-70]="salvando"
+                  [class.cursor-not-allowed]="salvando"
+                >
+                  @if (salvando) {
+                    <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>
+                  }
+                  {{ salvando ? 'Salvando...' : 'Salvar' }}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    }
+  </div>
+</div>

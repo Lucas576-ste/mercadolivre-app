@@ -1,0 +1,80 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+export interface AnuncioPayload {
+  titulo: string;
+  descricao?: string;
+  categoria: string;
+  condicao: string;
+  preco: number;
+  estoque: number;
+  fotos?: string[];
+}
+
+export interface Anuncio extends AnuncioPayload {
+  _id: string;
+  ml_id?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListagemParams {
+  titulo?: string;
+  status?: string;
+  categoria?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ListagemResponse {
+  anuncios: Anuncio[];
+  total: number;
+  pagina: number;
+  limite: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AnuncioService {
+  private readonly base = `${environment.apiUrl}/anuncios`;
+
+  constructor(private http: HttpClient) {}
+
+  getAnuncioById(id: string): Observable<Anuncio> {
+    return this.http.get<Anuncio>(`${this.base}/${id}`);
+  }
+
+  criarAnuncio(data: AnuncioPayload): Observable<Anuncio> {
+    return this.http.post<Anuncio>(this.base, data);
+  }
+
+  editarAnuncio(id: string, data: Partial<AnuncioPayload>): Observable<Anuncio> {
+    return this.http.put<Anuncio>(`${this.base}/${id}`, data);
+  }
+
+  listarAnuncios(filtros: ListagemParams = {}): Observable<ListagemResponse> {
+    let params = new HttpParams();
+    if (filtros.titulo)    params = params.set('busca', filtros.titulo);
+    if (filtros.status)    params = params.set('status', filtros.status);
+    if (filtros.categoria) params = params.set('categoria', filtros.categoria);
+    if (filtros.page)      params = params.set('pagina', String(filtros.page));
+    if (filtros.limit)     params = params.set('limite', String(filtros.limit));
+    return this.http.get<ListagemResponse>(this.base, { params });
+  }
+
+  sincronizar(): Observable<{ mensagem: string; sincronizados: number }> {
+    return this.http.post<{ mensagem: string; sincronizados: number }>(
+      `${this.base}/sincronizar`, {}
+    );
+  }
+
+  atualizarPreco(id: string, preco: number): Observable<Anuncio> {
+    return this.http.patch<Anuncio>(`${this.base}/${id}/preco`, { preco });
+  }
+
+  atualizarEstoque(id: string, estoque: number): Observable<Anuncio> {
+    return this.http.patch<Anuncio>(`${this.base}/${id}/estoque`, { estoque });
+  }
+}

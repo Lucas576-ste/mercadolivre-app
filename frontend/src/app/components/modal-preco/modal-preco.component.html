@@ -1,0 +1,42 @@
+<div class="overlay">
+  <div class="card">
+
+    <h2 class="titulo">Atualizar Preço</h2>
+    <div class="linha-amarela"></div>
+
+    <form [formGroup]="form" (ngSubmit)="confirmar()" novalidate>
+
+      <!-- Preço atual -->
+      <div class="campo">
+        <label class="label">Preço atual</label>
+        <input [value]="precoFormatado" disabled class="input-disabled" />
+      </div>
+
+      <!-- Novo preço -->
+      <div class="campo">
+        <label class="label">Novo preço</label>
+        <div class="preco-wrapper" [class.focused]="form.get('novoPreco')?.touched">
+          <span class="preco-prefix">R$</span>
+          <input type="number" formControlName="novoPreco" placeholder="0,00"
+                 min="0.01" step="0.01" class="preco-input" />
+        </div>
+        @if (form.get('novoPreco')?.invalid && form.get('novoPreco')?.touched) {
+          <p class="msg-erro">Informe um valor válido.</p>
+        }
+      </div>
+
+      <!-- Botões -->
+      <div class="botoes">
+        <button type="button" class="btn-cancelar" (click)="fechar.emit()">Cancelar</button>
+        <button type="submit" class="btn-confirmar" [disabled]="salvando">
+          {{ salvando ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+
+      @if (erro) {
+        <p class="msg-erro" style="margin-top: 10px; text-align: center">{{ erro }}</p>
+      }
+
+    </form>
+  </div>
+</div>

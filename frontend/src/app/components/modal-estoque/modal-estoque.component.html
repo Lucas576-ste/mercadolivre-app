@@ -1,0 +1,39 @@
+<div class="overlay">
+  <div class="card">
+
+    <h2 class="titulo">Atualizar Estoque</h2>
+    <div class="linha-amarela"></div>
+
+    <form [formGroup]="form" (ngSubmit)="confirmar()" novalidate>
+
+      <!-- Estoque atual -->
+      <div class="campo">
+        <label class="label">Estoque atual</label>
+        <input [value]="(anuncio?.estoque ?? 0) + ' unidades'" disabled class="input-disabled" />
+      </div>
+
+      <!-- Nova quantidade -->
+      <div class="campo">
+        <label class="label">Nova quantidade</label>
+        <input type="number" formControlName="novaQuantidade" placeholder="0" min="0"
+               class="input-quantidade" />
+        @if (form.get('novaQuantidade')?.invalid && form.get('novaQuantidade')?.touched) {
+          <p class="msg-erro">Informe uma quantidade válida.</p>
+        }
+      </div>
+
+      <!-- Botões -->
+      <div class="botoes">
+        <button type="button" class="btn-cancelar" (click)="fechar.emit()">Cancelar</button>
+        <button type="submit" class="btn-confirmar" [disabled]="salvando">
+          {{ salvando ? 'Salvando...' : 'Confirmar' }}
+        </button>
+      </div>
+
+      @if (erro) {
+        <p class="msg-erro" style="margin-top: 10px; text-align: center">{{ erro }}</p>
+      }
+
+    </form>
+  </div>
+</div>
