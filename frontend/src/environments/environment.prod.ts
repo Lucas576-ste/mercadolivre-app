@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://ml-gestor-api.onrender.com',
+  apiUrl: 'https://ml-gestor.onrender.com',
 };
