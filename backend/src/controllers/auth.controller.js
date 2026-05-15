@@ -38,7 +38,7 @@ async function callback(req, res) {
       { upsert: true, new: true }
     );
 
-    res.redirect(`${process.env.FRONTEND_URL}/anuncios`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback`);
   } catch (error) {
     const detalhe = error.response?.data || error.message;
     res.status(500).json({ erro: 'Falha ao obter token do Mercado Livre.', detalhe });
