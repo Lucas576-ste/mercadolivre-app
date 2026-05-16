@@ -48,7 +48,7 @@ async function criar(req, res) {
       category_id: categoryId,
       price: Number(preco),
       currency_id: 'BRL',
-      available_quantity: Number(estoque),
+      available_quantity: 1, // tipo free permite máx 1 unidade
       buying_mode: 'buy_it_now',
       listing_type_id: 'free',
       condition: condicao || 'new',
