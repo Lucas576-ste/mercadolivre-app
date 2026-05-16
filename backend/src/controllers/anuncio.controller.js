@@ -1,5 +1,6 @@
 const Anuncio = require('../models/Anuncio');
-const { mlRequest } = require('../services/mlApi.service');
+const Token = require('../models/Token');
+const { mlRequest, getValidToken } = require('../services/mlApi.service');
 
 async function listar(req, res) {
   try {
@@ -24,31 +25,52 @@ async function listar(req, res) {
 
 async function criar(req, res) {
   try {
-    const { titulo, preco, estoque, categoria, descricao, condicao, tipo_listagem, fotos } = req.body;
+    const { titulo, descricao, categoria, condicao, preco, estoque, fotos } = req.body;
 
+    // PASSO 1 — Montar payload principal (sem descrição)
     const payload = {
       title: titulo,
-      price: preco,
-      available_quantity: estoque,
       category_id: categoria,
-      description: { plain_text: descricao },
+      price: Number(preco),
+      currency_id: 'BRL',
+      available_quantity: Number(estoque),
+      buying_mode: 'buy_it_now',
+      listing_type_id: 'gold_special',
       condition: condicao || 'new',
-      listing_type_id: tipo_listagem || 'gold_special',
-      pictures: (fotos || []).map((url) => ({ source: url })),
+      pictures: (fotos || [])
+        .filter((url) => url && url.trim() !== '')
+        .map((url) => ({ source: url })),
     };
 
-    const mlResposta = await mlRequest('post', '/items', payload);
+    // PASSO 2 — Criar o item no ML
+    let mlResposta;
+    try {
+      mlResposta = await mlRequest('post', '/items', payload);
+    } catch (mlError) {
+      const detalhe = mlError.response?.data || mlError.message;
+      return res.status(400).json({ erro: 'Erro ao criar anúncio no Mercado Livre.', detalhe });
+    }
 
+    // PASSO 3 — Enviar descrição separado (se houver)
+    if (descricao && descricao.trim() !== '') {
+      try {
+        await mlRequest('post', `/items/${mlResposta.id}/description`, { plain_text: descricao });
+      } catch (descError) {
+        console.warn('Aviso: anúncio criado, mas falha ao salvar descrição:', descError.response?.data || descError.message);
+      }
+    }
+
+    // PASSO 4 — Salvar no MongoDB
     const anuncio = await Anuncio.create({
       ml_id: mlResposta.id,
       titulo,
-      preco,
-      estoque,
-      categoria,
       descricao,
+      preco: Number(preco),
+      estoque: Number(estoque),
+      categoria,
       condicao: condicao || 'new',
-      tipo_listagem: tipo_listagem || 'gold_special',
-      fotos: fotos || [],
+      tipo_listagem: 'gold_special',
+      fotos: (fotos || []).filter((url) => url && url.trim() !== ''),
       status: mlResposta.status,
     });
 
@@ -67,24 +89,37 @@ async function editar(req, res) {
     const anuncio = await Anuncio.findById(id);
     if (!anuncio) return res.status(404).json({ erro: 'Anúncio não encontrado.' });
 
+    // Payload para o ML
     const payload = {};
-    if (titulo) payload.title = titulo;
-    if (preco) payload.price = preco;
-    if (estoque !== undefined) payload.available_quantity = estoque;
-    if (condicao) payload.condition = condicao;
-    if (fotos) payload.pictures = fotos.map((url) => ({ source: url }));
+    if (titulo !== undefined)   payload.title              = titulo;
+    if (preco !== undefined)    payload.price              = Number(preco);
+    if (estoque !== undefined)  payload.available_quantity = Number(estoque);
+    if (condicao !== undefined) payload.condition          = condicao;
+    if (fotos !== undefined)    payload.pictures           = fotos
+      .filter((url) => url && url.trim() !== '')
+      .map((url) => ({ source: url }));
 
-    if (anuncio.ml_id) {
-      await mlRequest('put', `/items/${anuncio.ml_id}`, payload);
+    if (anuncio.ml_id && Object.keys(payload).length > 0) {
+      try {
+        await mlRequest('put', `/items/${anuncio.ml_id}`, payload);
+      } catch (mlError) {
+        const detalhe = mlError.response?.data || mlError.message;
+        return res.status(400).json({ erro: 'Erro ao editar anúncio no Mercado Livre.', detalhe });
+      }
     }
 
-    if (descricao && anuncio.ml_id) {
-      await mlRequest('put', `/items/${anuncio.ml_id}/description`, { plain_text: descricao });
+    // Descrição: chamada separada
+    if (descricao !== undefined && anuncio.ml_id) {
+      try {
+        await mlRequest('put', `/items/${anuncio.ml_id}/description`, { plain_text: descricao });
+      } catch (descError) {
+        console.warn('Aviso: falha ao atualizar descrição:', descError.response?.data || descError.message);
+      }
     }
 
     const atualizado = await Anuncio.findByIdAndUpdate(
       id,
-      { titulo, preco, estoque, descricao, condicao, fotos },
+      { titulo, preco: Number(preco), estoque: Number(estoque), descricao, condicao, fotos },
       { new: true }
     );
 
@@ -100,7 +135,7 @@ async function atualizarPreco(req, res) {
     const { id } = req.params;
     const { preco } = req.body;
 
-    if (!preco || isNaN(preco)) {
+    if (preco === undefined || isNaN(preco)) {
       return res.status(400).json({ erro: 'Preço inválido.' });
     }
 
@@ -108,7 +143,16 @@ async function atualizarPreco(req, res) {
     if (!anuncio) return res.status(404).json({ erro: 'Anúncio não encontrado.' });
 
     if (anuncio.ml_id) {
-      await mlRequest('put', `/items/${anuncio.ml_id}`, { price: Number(preco) });
+      try {
+        // price + available_quantity obrigatórios juntos (exigência ML desde mar/2026)
+        await mlRequest('put', `/items/${anuncio.ml_id}`, {
+          price: Number(preco),
+          available_quantity: anuncio.estoque,
+        });
+      } catch (mlError) {
+        const detalhe = mlError.response?.data || mlError.message;
+        return res.status(400).json({ erro: 'Erro ao atualizar preço no Mercado Livre.', detalhe });
+      }
     }
 
     anuncio.preco = Number(preco);
@@ -134,7 +178,12 @@ async function atualizarEstoque(req, res) {
     if (!anuncio) return res.status(404).json({ erro: 'Anúncio não encontrado.' });
 
     if (anuncio.ml_id) {
-      await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
+      try {
+        await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
+      } catch (mlError) {
+        const detalhe = mlError.response?.data || mlError.message;
+        return res.status(400).json({ erro: 'Erro ao atualizar estoque no Mercado Livre.', detalhe });
+      }
     }
 
     anuncio.estoque = Number(estoque);
@@ -149,31 +198,47 @@ async function atualizarEstoque(req, res) {
 
 async function sincronizar(req, res) {
   try {
-    const token = await require('../services/mlApi.service').getValidToken();
-    const mlUser = await require('../services/mlApi.service').mlRequest('get', '/users/me');
-    const userId = mlUser.id;
+    // Usa ml_user_id direto do Token salvo no MongoDB
+    const token = await Token.findOne();
+    if (!token) return res.status(401).json({ erro: 'Usuário não autenticado.' });
 
-    // Busca IDs de todos os anuncios do usuario no ML
-    const resultado = await mlRequest('get', `/users/${userId}/items/search?status=active&limit=100`);
+    const userId = token.ml_user_id;
+
+    // Busca todos os IDs (sem filtro de status)
+    const resultado = await mlRequest('get', `/users/${userId}/items/search?limit=100`);
     const ids = resultado.results || [];
 
-    if (ids.length === 0) return res.json({ mensagem: 'Nenhum anúncio encontrado no Mercado Livre.', sincronizados: 0 });
-
-    // Busca detalhes em lote (max 20 por requisicao)
-    const lotes = [];
-    for (let i = 0; i < ids.length; i += 20) {
-      lotes.push(ids.slice(i, i + 20));
+    if (ids.length === 0) {
+      return res.json({ mensagem: 'Nenhum anúncio encontrado no Mercado Livre.', sincronizados: 0 });
     }
 
+    // Busca detalhes em lotes de 20
     let sincronizados = 0;
-    for (const lote of lotes) {
-      const detalhes = await mlRequest('get', `/items?ids=${lote.join(',')}`);
+    for (let i = 0; i < ids.length; i += 20) {
+      const lote = ids.slice(i, i + 20);
+      let detalhes;
+      try {
+        detalhes = await mlRequest('get', `/items?ids=${lote.join(',')}`);
+      } catch (mlError) {
+        console.warn('Erro ao buscar lote de itens:', mlError.response?.data || mlError.message);
+        continue;
+      }
+
       for (const item of detalhes) {
         if (item.code !== 200) continue;
         const { id, title, price, available_quantity, status, category_id, condition, listing_type_id } = item.body;
         await Anuncio.findOneAndUpdate(
           { ml_id: id },
-          { ml_id: id, titulo: title, preco: price, estoque: available_quantity, status, categoria: category_id, condicao: condition, tipo_listagem: listing_type_id },
+          {
+            ml_id: id,
+            titulo: title,
+            preco: price,
+            estoque: available_quantity,
+            status,
+            categoria: category_id,
+            condicao: condition,
+            tipo_listagem: listing_type_id,
+          },
           { upsert: true, new: true }
         );
         sincronizados++;
