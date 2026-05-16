@@ -38,7 +38,7 @@ export class FormAnuncioComponent implements OnInit {
       titulo:    ['', Validators.required],
       descricao: [''],
       categoria: ['', Validators.required],
-      condicao:  ['novo'],
+      condicao:  ['new'],
       preco:     [null, [Validators.required, Validators.min(0.01)]],
       estoque:   [null, [Validators.required, Validators.min(0)]],
       fotos:     this.fb.array([this.fb.control(''), this.fb.control(''), this.fb.control('')]),

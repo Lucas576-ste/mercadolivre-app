@@ -72,12 +72,11 @@
                   [class.border-red-400]="form.get('categoria')?.invalid && form.get('categoria')?.touched"
                 >
                   <option value="" disabled>Selecione uma categoria</option>
-                  <option value="eletronicos">Eletrônicos</option>
-                  <option value="esportes">Esportes</option>
-                  <option value="casa-jardim">Casa e Jardim</option>
-                  <option value="moda">Moda</option>
-                  <option value="veiculos">Veículos</option>
-                  <option value="outros">Outros</option>
+                  <option value="MLB1051">Eletrônicos, Áudio e Vídeo</option>
+                  <option value="MLB1276">Esportes e Fitness</option>
+                  <option value="MLB1574">Casa, Móveis e Decoração</option>
+                  <option value="MLB1430">Moda e Acessórios</option>
+                  <option value="MLB1743">Veículos e Peças</option>
                 </select>
                 @if (form.get('categoria')?.invalid && form.get('categoria')?.touched) {
                   <p class="text-red-500 text-[12px] -mt-4 mb-4">Selecione uma categoria.</p>
@@ -89,11 +88,11 @@
                 <label class="field-label">Condição</label>
                 <div class="flex items-center gap-5">
                   <label class="flex items-center gap-2 text-[14px] text-[#374151] cursor-pointer">
-                    <input type="radio" formControlName="condicao" value="novo" class="accent-[#FFE600]" />
+                    <input type="radio" formControlName="condicao" value="new" class="accent-[#FFE600]" />
                     Novo
                   </label>
                   <label class="flex items-center gap-2 text-[14px] text-[#374151] cursor-pointer">
-                    <input type="radio" formControlName="condicao" value="usado" class="accent-[#FFE600]" />
+                    <input type="radio" formControlName="condicao" value="used" class="accent-[#FFE600]" />
                     Usado
                   </label>
                 </div>
