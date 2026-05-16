@@ -35,7 +35,7 @@ async function criar(req, res) {
       currency_id: 'BRL',
       available_quantity: Number(estoque),
       buying_mode: 'buy_it_now',
-      listing_type_id: 'gold_special',
+      listing_type_id: 'free',
       condition: condicao || 'new',
       pictures: (fotos || [])
         .filter((url) => url && url.trim() !== '')
