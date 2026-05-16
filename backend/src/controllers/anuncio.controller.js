@@ -23,9 +23,10 @@ async function listar(req, res) {
   }
 }
 
+const axios = require('axios');
+
 async function detectarCategoria(titulo, categoriaFallback) {
   try {
-    const axios = require('axios');
     const url = `https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`;
     const { data } = await axios.get(url);
     if (data && data[0]?.category_id) return data[0].category_id;
@@ -35,6 +36,35 @@ async function detectarCategoria(titulo, categoriaFallback) {
   return categoriaFallback;
 }
 
+async function montarAtributos(categoryId, titulo) {
+  try {
+    const { data: attrs } = await axios.get(`https://api.mercadolibre.com/categories/${categoryId}/attributes`);
+    const obrigatorios = attrs.filter(a => a.tags?.required);
+
+    return obrigatorios.map(attr => {
+      // Para atributos do tipo lista, usa o primeiro valor disponível
+      if (attr.value_type === 'list' && attr.values?.length > 0) {
+        return { id: attr.id, value_id: attr.values[0].id, value_name: attr.values[0].name };
+      }
+      // Para boolean, usa false
+      if (attr.value_type === 'boolean') {
+        const falso = attr.values?.find(v => v.name === 'Não' || v.name === 'No');
+        return falso
+          ? { id: attr.id, value_id: falso.id, value_name: falso.name }
+          : { id: attr.id, value_name: 'Não' };
+      }
+      // Para number, usa 0
+      if (attr.value_type === 'number') {
+        return { id: attr.id, value_name: '0' };
+      }
+      // Para string (BRAND, MODEL, etc.), extrai do título
+      return { id: attr.id, value_name: titulo };
+    });
+  } catch {
+    return [];
+  }
+}
+
 async function criar(req, res) {
   try {
     const { titulo, descricao, categoria, condicao, preco, estoque, fotos } = req.body;
@@ -42,7 +72,10 @@ async function criar(req, res) {
     // PASSO 1 — Detectar categoria folha pelo título (domain_discovery)
     const categoryId = await detectarCategoria(titulo, categoria);
 
-    // PASSO 2 — Montar payload principal (sem descrição)
+    // PASSO 2 — Buscar e preencher atributos obrigatórios da categoria
+    const attributes = await montarAtributos(categoryId, titulo);
+
+    // PASSO 3 — Montar payload principal (sem descrição)
     const payload = {
       title: titulo,
       category_id: categoryId,
@@ -55,6 +88,7 @@ async function criar(req, res) {
       pictures: (fotos || [])
         .filter((url) => url && url.trim() !== '')
         .map((url) => ({ source: url })),
+      ...(attributes.length > 0 && { attributes }),
     };
 
     // PASSO 3 — Criar o item no ML
