@@ -23,14 +23,29 @@ async function listar(req, res) {
   }
 }
 
+async function detectarCategoria(titulo, categoriaFallback) {
+  try {
+    const axios = require('axios');
+    const url = `https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`;
+    const { data } = await axios.get(url);
+    if (data && data[0]?.category_id) return data[0].category_id;
+  } catch {
+    // se falhar, usa a categoria enviada pelo frontend
+  }
+  return categoriaFallback;
+}
+
 async function criar(req, res) {
   try {
     const { titulo, descricao, categoria, condicao, preco, estoque, fotos } = req.body;
 
-    // PASSO 1 — Montar payload principal (sem descrição)
+    // PASSO 1 — Detectar categoria folha pelo título (domain_discovery)
+    const categoryId = await detectarCategoria(titulo, categoria);
+
+    // PASSO 2 — Montar payload principal (sem descrição)
     const payload = {
       title: titulo,
-      category_id: categoria,
+      category_id: categoryId,
       price: Number(preco),
       currency_id: 'BRL',
       available_quantity: Number(estoque),
@@ -42,7 +57,7 @@ async function criar(req, res) {
         .map((url) => ({ source: url })),
     };
 
-    // PASSO 2 — Criar o item no ML
+    // PASSO 3 — Criar o item no ML
     let mlResposta;
     try {
       mlResposta = await mlRequest('post', '/items', payload);
@@ -51,7 +66,7 @@ async function criar(req, res) {
       return res.status(400).json({ erro: 'Erro ao criar anúncio no Mercado Livre.', detalhe });
     }
 
-    // PASSO 3 — Enviar descrição separado (se houver)
+    // PASSO 4 — Enviar descrição separado (se houver)
     if (descricao && descricao.trim() !== '') {
       try {
         await mlRequest('post', `/items/${mlResposta.id}/description`, { plain_text: descricao });
@@ -60,14 +75,14 @@ async function criar(req, res) {
       }
     }
 
-    // PASSO 4 — Salvar no MongoDB
+    // PASSO 5 — Salvar no MongoDB
     const anuncio = await Anuncio.create({
       ml_id: mlResposta.id,
       titulo,
       descricao,
       preco: Number(preco),
       estoque: Number(estoque),
-      categoria,
+      categoria: categoryId,
       condicao: condicao || 'new',
       tipo_listagem: 'gold_special',
       fotos: (fotos || []).filter((url) => url && url.trim() !== ''),
