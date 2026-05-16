@@ -50,6 +50,20 @@
                 @if (form.get('titulo')?.invalid && form.get('titulo')?.touched) {
                   <p class="text-red-500 text-[12px] -mt-4 mb-4">Título é obrigatório.</p>
                 }
+
+                <!-- Indicador de detecção de categoria -->
+                @if (detectandoCategoria) {
+                  <div class="categoria-badge categoria-badge--loading">
+                    <span class="spinner"></span>
+                    Detectando categoria...
+                  </div>
+                }
+                @if (!detectandoCategoria && categoriaSugerida?.category_name) {
+                  <div class="categoria-badge categoria-badge--ok">
+                    <span>🏷️</span>
+                    Categoria detectada: <strong>{{ categoriaSugerida!.category_name }}</strong>
+                  </div>
+                }
               </div>
 
               <!-- Descrição -->
@@ -99,6 +113,26 @@
                 </select>
                 @if (form.get('categoria')?.invalid && form.get('categoria')?.touched) {
                   <p class="text-red-500 text-[12px] -mt-4 mb-4">Selecione uma categoria.</p>
+                }
+
+                <!-- Atributos obrigatórios detectados -->
+                @if (atributos.length > 0) {
+                  <div class="atributos-info">
+                    <p class="atributos-info__titulo">Atributos obrigatórios da categoria:</p>
+                    <ul class="atributos-info__lista">
+                      @for (attr of atributos; track attr.id) {
+                        <li>
+                          <span class="atributos-info__nome">{{ attr.nome }}</span>
+                          @if (attr.valores && attr.valores.length > 0) {
+                            <span class="atributos-info__valores">
+                              ({{ attr.valores.slice(0, 3).map(v => v.nome).join(', ') }}{{ attr.valores.length > 3 ? '...' : '' }})
+                            </span>
+                          }
+                        </li>
+                      }
+                    </ul>
+                    <p class="atributos-info__nota">Esses atributos serão preenchidos automaticamente ao criar o anúncio.</p>
+                  </div>
                 }
               </div>
 

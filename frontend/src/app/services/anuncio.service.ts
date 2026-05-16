@@ -36,9 +36,23 @@ export interface ListagemResponse {
   limite: number;
 }
 
+export interface AtributoSugerido {
+  id: string;
+  nome: string;
+  tipo: string;
+  valores: { id: string; nome: string }[] | null;
+}
+
+export interface CategoriaSugerida {
+  category_id: string | null;
+  category_name: string | null;
+  atributos: AtributoSugerido[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AnuncioService {
   private readonly base = `${environment.apiUrl}/anuncios`;
+  private readonly categoriasBase = `${environment.apiUrl}/categorias`;
 
   constructor(private http: HttpClient) {}
 
@@ -76,5 +90,10 @@ export class AnuncioService {
 
   atualizarEstoque(id: string, estoque: number): Observable<Anuncio> {
     return this.http.patch<Anuncio>(`${this.base}/${id}/estoque`, { estoque });
+  }
+
+  sugerirCategoria(titulo: string): Observable<CategoriaSugerida> {
+    const params = new HttpParams().set('titulo', titulo);
+    return this.http.get<CategoriaSugerida>(`${this.categoriasBase}/sugerir`, { params });
   }
 }

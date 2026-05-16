@@ -1,0 +1,13 @@
+<div class="toast-container" aria-live="polite" aria-atomic="false">
+  <div
+    *ngFor="let toast of toasts$ | async; trackBy: trackById"
+    class="toast"
+    [class.toast--sucesso]="toast.tipo === 'sucesso'"
+    [class.toast--erro]="toast.tipo === 'erro'"
+    [class.toast--aviso]="toast.tipo === 'aviso'"
+  >
+    <span class="toast__icon">{{ icone(toast.tipo) }}</span>
+    <span class="toast__mensagem">{{ toast.mensagem }}</span>
+    <button class="toast__fechar" (click)="remover(toast.id)" aria-label="Fechar">×</button>
+  </div>
+</div>

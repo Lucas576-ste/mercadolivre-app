@@ -7,6 +7,7 @@ import { NavbarComponent } from '../../components/navbar/navbar.component';
 import { ModalPrecoComponent } from '../../components/modal-preco/modal-preco.component';
 import { ModalEstoqueComponent } from '../../components/modal-estoque/modal-estoque.component';
 import { Anuncio, AnuncioService } from '../../services/anuncio.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-listagem',
@@ -17,6 +18,7 @@ import { Anuncio, AnuncioService } from '../../services/anuncio.service';
 })
 export class ListagemComponent implements OnInit, OnDestroy {
   private service = inject(AnuncioService);
+  private toast = inject(ToastService);
   router = inject(Router);
   private destroy$ = new Subject<void>();
   private buscaSubject = new Subject<string>();
@@ -72,7 +74,7 @@ export class ListagemComponent implements OnInit, OnDestroy {
       limit: this.limite,
     }).subscribe({
       next: (res) => { this.anuncios = res.anuncios; this.total = res.total; this.carregando = false; },
-      error: () => { alert('Erro ao carregar anúncios.'); this.carregando = false; },
+      error: () => { this.toast.erro('Erro ao carregar anúncios.'); this.carregando = false; },
     });
   }
 
@@ -88,8 +90,8 @@ export class ListagemComponent implements OnInit, OnDestroy {
   sincronizar(): void {
     this.sincronizando = true;
     this.service.sincronizar().subscribe({
-      next: (res) => { alert(`${res.sincronizados} anúncio(s) sincronizado(s).`); this.sincronizando = false; this.carregar(); },
-      error: () => { alert('Erro ao sincronizar.'); this.sincronizando = false; },
+      next: (res) => { this.toast.sucesso(`${res.sincronizados} anúncio(s) sincronizado(s).`); this.sincronizando = false; this.carregar(); },
+      error: () => { this.toast.erro('Erro ao sincronizar.'); this.sincronizando = false; },
     });
   }
 

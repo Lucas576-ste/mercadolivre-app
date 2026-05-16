@@ -6,6 +6,7 @@ const connectDB = require('./src/config/database');
 
 const authRoutes = require('./src/routes/auth.routes');
 const anuncioRoutes = require('./src/routes/anuncio.routes');
+const categoriaRoutes = require('./src/routes/categoria.routes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 // Rotas
 app.use('/auth', authRoutes);
 app.use('/anuncios', anuncioRoutes);
+app.use('/categorias', categoriaRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
