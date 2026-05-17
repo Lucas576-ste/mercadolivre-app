@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { getToken } = require('./config');
 
-const TITULO_TESTE = 'Smartphone Samsung Galaxy';
-const TITULO_ANUNCIO = 'Smartphone Samsung Galaxy - Item de Teste Não Ofertar';
+const TITULO_TESTE = 'Violão Acústico';
+const TITULO_ANUNCIO = 'Violão Acústico - Item de Teste Não Ofertar';
 
 async function preverCategoria(titulo) {
   const url = `https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`;
@@ -30,18 +30,25 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`✅ category_id obtida: ${categoryId}\n`);
+  console.log(`✅ category_id sugerida pelo preditor: ${categoryId}`);
+  console.log(`ℹ️  Usando MLB456083 (Filmes Online) — categoria folha com apenas TITLE obrigatório\n`);
 
   // PASSO 2 — Montar payload
   const payload = {
     title: TITULO_ANUNCIO,
-    category_id: categoryId,
+    category_id: 'MLB456083',
     price: 100,
     currency_id: 'BRL',
     available_quantity: 1,
     buying_mode: 'buy_it_now',
     listing_type_id: 'free',
     condition: 'new',
+    pictures: [
+      { source: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png' },
+    ],
+    attributes: [
+      { id: 'TITLE', value_name: TITULO_ANUNCIO },
+    ],
   };
 
   console.log('📦 Payload que será enviado ao ML:');
