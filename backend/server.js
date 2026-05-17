@@ -29,7 +29,18 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  // Migration: garante que todos os documentos existentes têm o campo versao.
+  // Necessário para anúncios criados antes do optimistic locking ser adicionado.
+  const Anuncio = require('./src/domain/entity/Anuncio');
+  const migrados = await Anuncio.updateMany(
+    { versao: { $exists: false } },
+    { $set: { versao: 0 } }
+  );
+  if (migrados.modifiedCount > 0) {
+    console.log(`[migration] Campo versao adicionado em ${migrados.modifiedCount} anúncio(s).`);
+  }
+
   app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
   });
