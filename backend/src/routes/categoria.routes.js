@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { sugerirCategoria } = require('../controllers/categoria.controller');
+const { sugerirCategoria } = require('../controller/categoria.controller');
 
 router.get('/sugerir', sugerirCategoria);
 

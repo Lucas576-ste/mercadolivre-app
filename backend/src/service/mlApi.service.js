@@ -1,6 +1,6 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
-const Token = require('../models/Token');
+const TokenRepository = require('../repository/TokenRepository');
 
 const mlClient = axios.create({
   baseURL: 'https://api.mercadolibre.com',
@@ -17,7 +17,7 @@ axiosRetry(mlClient, {
 });
 
 async function getToken() {
-  const token = await Token.findOne();
+  const token = await TokenRepository.findFirst();
   if (!token) throw new Error('Usuário não autenticado. Faça login pelo /auth/login');
   return token;
 }
@@ -34,9 +34,7 @@ async function refreshAccessToken(token) {
   token.access_token = access_token;
   token.refresh_token = refresh_token;
   token.expires_at = new Date(Date.now() + expires_in * 1000);
-  await token.save();
-
-  return token;
+  return TokenRepository.save(token);
 }
 
 async function getValidToken() {

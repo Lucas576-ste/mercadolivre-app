@@ -1,7 +1,8 @@
 const axios = require('axios');
-const Token = require('../models/Token');
+const TokenRepository       = require('../repository/TokenRepository');
 const { refreshAccessToken } = require('./mlApi.service');
-const ServiceError = require('../utils/ServiceError');
+const ValidationException   = require('../domain/exception/ValidationException');
+const MercadoLivreException = require('../domain/exception/MercadoLivreException');
 
 function gerarUrlLogin() {
   const url = new URL('https://auth.mercadolivre.com.br/authorization');
@@ -12,7 +13,7 @@ function gerarUrlLogin() {
 }
 
 async function processarCallback(code) {
-  if (!code) throw new ServiceError('Código de autorização não recebido.', 400);
+  if (!code) throw new ValidationException('Código de autorização não recebido.');
 
   let tokenData;
   try {
@@ -25,29 +26,24 @@ async function processarCallback(code) {
     });
     tokenData = response.data;
   } catch (error) {
-    throw new ServiceError(
+    throw new MercadoLivreException(
       'Falha ao obter token do Mercado Livre.',
-      500,
       error.response?.data || error.message
     );
   }
 
   const { access_token, refresh_token, expires_in, user_id } = tokenData;
 
-  await Token.findOneAndUpdate(
-    { ml_user_id: String(user_id) },
-    {
-      ml_user_id: String(user_id),
-      access_token,
-      refresh_token,
-      expires_at: new Date(Date.now() + expires_in * 1000),
-    },
-    { upsert: true, new: true }
-  );
+  await TokenRepository.upsert(String(user_id), {
+    ml_user_id:    String(user_id),
+    access_token,
+    refresh_token,
+    expires_at: new Date(Date.now() + expires_in * 1000),
+  });
 }
 
 async function verificarStatus() {
-  const token = await Token.findOne();
+  const token = await TokenRepository.findFirst();
   if (!token) return false;
 
   if (token.isExpired()) {
@@ -63,7 +59,7 @@ async function verificarStatus() {
 }
 
 async function logout() {
-  await Token.deleteMany({});
+  await TokenRepository.deleteAll();
 }
 
 module.exports = { gerarUrlLogin, processarCallback, verificarStatus, logout };

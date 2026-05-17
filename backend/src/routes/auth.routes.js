@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { login, callback, status, logout } = require('../controllers/auth.controller');
+const { login, callback, status, logout } = require('../controller/auth.controller');
 
 router.get('/login', login);
 router.get('/callback', callback);

@@ -1,18 +1,20 @@
-const Anuncio = require('../models/Anuncio');
-const Token = require('../models/Token');
+const AnuncioRepository      = require('../repository/AnuncioRepository');
+const TokenRepository        = require('../repository/TokenRepository');
 const { mlRequest, mlPublicRequest } = require('./mlApi.service');
-const ServiceError = require('../utils/ServiceError');
+const NotFoundException      = require('../domain/exception/NotFoundException');
+const ConflictException      = require('../domain/exception/ConflictException');
+const MercadoLivreException  = require('../domain/exception/MercadoLivreException');
 
-// ── Helpers ML públicos (sem autenticação) ─────────────────────────────────
+// ── Helpers ML públicos ────────────────────────────────────────────────────
 
 async function detectarCategoria(titulo, categoriaFallback) {
   try {
     const data = await mlPublicRequest(
       `/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`
     );
-    if (data && data[0]?.category_id) return data[0].category_id;
+    if (data?.[0]?.category_id) return data[0].category_id;
   } catch {
-    // fallback silencioso: usa a categoria enviada pelo frontend
+    // fallback silencioso
   }
   return categoriaFallback;
 }
@@ -20,23 +22,20 @@ async function detectarCategoria(titulo, categoriaFallback) {
 async function montarAtributos(categoryId, titulo) {
   try {
     const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
-    const obrigatorios = attrs.filter(a => a.tags?.required);
-
-    return obrigatorios.map(attr => {
-      if (attr.value_type === 'list' && attr.values?.length > 0) {
-        return { id: attr.id, value_id: attr.values[0].id, value_name: attr.values[0].name };
-      }
-      if (attr.value_type === 'boolean') {
-        const falso = attr.values?.find(v => v.name === 'Não' || v.name === 'No');
-        return falso
-          ? { id: attr.id, value_id: falso.id, value_name: falso.name }
-          : { id: attr.id, value_name: 'Não' };
-      }
-      if (attr.value_type === 'number') {
-        return { id: attr.id, value_name: '0' };
-      }
-      return { id: attr.id, value_name: titulo };
-    });
+    return attrs
+      .filter(a => a.tags?.required)
+      .map(attr => {
+        if (attr.value_type === 'list' && attr.values?.length > 0)
+          return { id: attr.id, value_id: attr.values[0].id, value_name: attr.values[0].name };
+        if (attr.value_type === 'boolean') {
+          const falso = attr.values?.find(v => v.name === 'Não' || v.name === 'No');
+          return falso
+            ? { id: attr.id, value_id: falso.id, value_name: falso.name }
+            : { id: attr.id, value_name: 'Não' };
+        }
+        if (attr.value_type === 'number') return { id: attr.id, value_name: '0' };
+        return { id: attr.id, value_name: titulo };
+      });
   } catch {
     return [];
   }
@@ -46,28 +45,28 @@ async function montarAtributos(categoryId, titulo) {
 
 async function listar({ status, categoria, busca, pagina = 1, limite = 20 }) {
   const filtro = {};
-  if (status)    filtro.status   = status;
+  if (status)    filtro.status    = status;
   if (categoria) filtro.categoria = categoria;
-  if (busca)     filtro.titulo   = { $regex: busca, $options: 'i' };
+  if (busca)     filtro.titulo    = { $regex: busca, $options: 'i' };
 
   const skip = (Number(pagina) - 1) * Number(limite);
   const [anuncios, total] = await Promise.all([
-    Anuncio.find(filtro).skip(skip).limit(Number(limite)).sort({ createdAt: -1 }),
-    Anuncio.countDocuments(filtro),
+    AnuncioRepository.findAll(filtro, skip, Number(limite)),
+    AnuncioRepository.count(filtro),
   ]);
 
   return { anuncios, total, pagina: Number(pagina), limite: Number(limite) };
 }
 
 async function buscarPorId(id) {
-  const anuncio = await Anuncio.findById(id);
-  if (!anuncio) throw new ServiceError('Anúncio não encontrado.', 404);
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
   return anuncio;
 }
 
 async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos }) {
-  const categoryId  = await detectarCategoria(titulo, categoria);
-  const attributes  = await montarAtributos(categoryId, titulo);
+  const categoryId = await detectarCategoria(titulo, categoria);
+  const attributes = await montarAtributos(categoryId, titulo);
 
   const mlPayload = {
     title: titulo,
@@ -86,9 +85,8 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
   try {
     mlResposta = await mlRequest('post', '/items', mlPayload);
   } catch (mlError) {
-    throw new ServiceError(
+    throw new MercadoLivreException(
       'Erro ao criar anúncio no Mercado Livre.',
-      400,
       mlError.response?.data || mlError.message
     );
   }
@@ -102,7 +100,7 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
   }
 
   try {
-    return await Anuncio.create({
+    return await AnuncioRepository.create({
       ml_id: mlResposta.id,
       titulo,
       descricao,
@@ -115,33 +113,29 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
       status: mlResposta.status,
     });
   } catch (dbError) {
-    if (dbError.code === 11000) {
-      throw new ServiceError('Já existe um anúncio com esse ID do Mercado Livre no banco de dados.', 409);
-    }
+    if (dbError.code === 11000)
+      throw new ConflictException('Já existe um anúncio com esse ID do Mercado Livre no banco de dados.');
     throw dbError;
   }
 }
 
 async function editar(id, { titulo, preco, estoque, descricao, condicao, fotos }) {
-  const anuncio = await Anuncio.findById(id);
-  if (!anuncio) throw new ServiceError('Anúncio não encontrado.', 404);
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
   const mlPayload = {};
   if (titulo   !== undefined) mlPayload.title              = titulo;
   if (preco    !== undefined) mlPayload.price              = Number(preco);
   if (estoque  !== undefined) mlPayload.available_quantity = Number(estoque);
   if (condicao !== undefined) mlPayload.condition          = condicao;
-  if (fotos    !== undefined) mlPayload.pictures           = fotos
-    .filter(u => u?.trim())
-    .map(u => ({ source: u }));
+  if (fotos    !== undefined) mlPayload.pictures           = fotos.filter(u => u?.trim()).map(u => ({ source: u }));
 
   if (anuncio.ml_id && Object.keys(mlPayload).length > 0) {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, mlPayload);
     } catch (mlError) {
-      throw new ServiceError(
+      throw new MercadoLivreException(
         'Erro ao editar anúncio no Mercado Livre.',
-        400,
         mlError.response?.data || mlError.message
       );
     }
@@ -163,25 +157,16 @@ async function editar(id, { titulo, preco, estoque, descricao, condicao, fotos }
   if (condicao  !== undefined) campos.condicao  = condicao;
   if (fotos     !== undefined) campos.fotos     = fotos;
 
-  const atualizado = await Anuncio.findOneAndUpdate(
-    { _id: id, versao: anuncio.versao },
-    { ...campos, $inc: { versao: 1 } },
-    { new: true }
+  const atualizado = await AnuncioRepository.updateWithLock(id, anuncio.versao, campos);
+  if (!atualizado) throw new ConflictException(
+    'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.'
   );
-
-  if (!atualizado) {
-    throw new ServiceError(
-      'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
-      409
-    );
-  }
-
   return atualizado;
 }
 
 async function atualizarPreco(id, preco) {
-  const anuncio = await Anuncio.findById(id);
-  if (!anuncio) throw new ServiceError('Anúncio não encontrado.', 404);
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
   if (anuncio.ml_id) {
     try {
@@ -190,91 +175,68 @@ async function atualizarPreco(id, preco) {
         available_quantity: anuncio.estoque,
       });
     } catch (mlError) {
-      throw new ServiceError(
+      throw new MercadoLivreException(
         'Erro ao atualizar preço no Mercado Livre.',
-        400,
         mlError.response?.data || mlError.message
       );
     }
   }
 
-  const atualizado = await Anuncio.findOneAndUpdate(
-    { _id: id, versao: anuncio.versao },
-    { preco: Number(preco), $inc: { versao: 1 } },
-    { new: true }
+  const atualizado = await AnuncioRepository.updateWithLock(id, anuncio.versao, { preco: Number(preco) });
+  if (!atualizado) throw new ConflictException(
+    'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.'
   );
-
-  if (!atualizado) {
-    throw new ServiceError(
-      'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
-      409
-    );
-  }
-
   return atualizado;
 }
 
 async function atualizarEstoque(id, estoque) {
-  const anuncio = await Anuncio.findById(id);
-  if (!anuncio) throw new ServiceError('Anúncio não encontrado.', 404);
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
   if (anuncio.ml_id) {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
     } catch (mlError) {
-      throw new ServiceError(
+      throw new MercadoLivreException(
         'Erro ao atualizar estoque no Mercado Livre.',
-        400,
         mlError.response?.data || mlError.message
       );
     }
   }
 
-  const atualizado = await Anuncio.findOneAndUpdate(
-    { _id: id, versao: anuncio.versao },
-    { estoque: Number(estoque), $inc: { versao: 1 } },
-    { new: true }
+  const atualizado = await AnuncioRepository.updateWithLock(id, anuncio.versao, { estoque: Number(estoque) });
+  if (!atualizado) throw new ConflictException(
+    'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.'
   );
-
-  if (!atualizado) {
-    throw new ServiceError(
-      'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
-      409
-    );
-  }
-
   return atualizado;
 }
 
 async function sincronizar() {
-  const token = await Token.findOne();
-  if (!token) throw new ServiceError('Usuário não autenticado.', 401);
+  const token = await TokenRepository.findFirst();
+  if (!token) throw new NotFoundException('Usuário não autenticado.');
 
   const resultado = await mlRequest('get', `/users/${token.ml_user_id}/items/search?limit=100`);
   const ids = resultado.results || [];
 
-  if (ids.length === 0) return { mensagem: 'Nenhum anúncio encontrado no Mercado Livre.', sincronizados: 0 };
+  if (ids.length === 0)
+    return { mensagem: 'Nenhum anúncio encontrado no Mercado Livre.', sincronizados: 0 };
 
   let sincronizados = 0;
   for (let i = 0; i < ids.length; i += 20) {
-    const lote = ids.slice(i, i + 20);
     let detalhes;
     try {
-      detalhes = await mlRequest('get', `/items?ids=${lote.join(',')}`);
+      detalhes = await mlRequest('get', `/items?ids=${ids.slice(i, i + 20).join(',')}`);
     } catch (mlError) {
       console.warn('Erro ao buscar lote de itens:', mlError.response?.data || mlError.message);
       continue;
     }
-
     for (const item of detalhes) {
       if (item.code !== 200) continue;
       const { id, title, price, available_quantity, status, category_id, condition, listing_type_id } = item.body;
-      await Anuncio.findOneAndUpdate(
-        { ml_id: id },
-        { ml_id: id, titulo: title, preco: price, estoque: available_quantity,
-          status, categoria: category_id, condicao: condition, tipo_listagem: listing_type_id },
-        { upsert: true, new: true }
-      );
+      await AnuncioRepository.upsertByMlId(id, {
+        ml_id: id, titulo: title, preco: price, estoque: available_quantity,
+        status, categoria: category_id, condicao: condition, tipo_listagem: listing_type_id,
+      });
       sincronizados++;
     }
   }
