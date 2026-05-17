@@ -11,6 +11,7 @@ const anuncioSchema = new mongoose.Schema({
   condicao: { type: String, enum: ['new', 'used'], default: 'new' },
   tipo_listagem: { type: String, default: 'gold_special' },
   fotos: [{ type: String }],
+  versao: { type: Number, default: 0 },   // optimistic locking
 }, { timestamps: true });
 
 module.exports = mongoose.model('Anuncio', anuncioSchema);

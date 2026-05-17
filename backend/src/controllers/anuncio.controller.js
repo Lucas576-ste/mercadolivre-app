@@ -125,6 +125,10 @@ async function criar(req, res) {
 
     res.status(201).json(anuncio);
   } catch (error) {
+    // Duplicidade de ml_id (ex.: anúncio já importado via sincronizar)
+    if (error.code === 11000) {
+      return res.status(409).json({ erro: 'Já existe um anúncio com esse ID do Mercado Livre no banco de dados.' });
+    }
     const detalhe = error.response?.data || error.message;
     res.status(500).json({ erro: 'Erro ao criar anúncio.', detalhe });
   }
@@ -166,11 +170,26 @@ async function editar(req, res) {
       }
     }
 
-    const atualizado = await Anuncio.findByIdAndUpdate(
-      id,
-      { titulo, preco: Number(preco), estoque: Number(estoque), descricao, condicao, fotos },
+    // Optimistic locking: verifica versão antes de persistir
+    const campos = {};
+    if (titulo !== undefined)   campos.titulo   = titulo;
+    if (preco !== undefined)    campos.preco     = Number(preco);
+    if (estoque !== undefined)  campos.estoque   = Number(estoque);
+    if (descricao !== undefined) campos.descricao = descricao;
+    if (condicao !== undefined) campos.condicao  = condicao;
+    if (fotos !== undefined)    campos.fotos     = fotos;
+
+    const atualizado = await Anuncio.findOneAndUpdate(
+      { _id: id, versao: anuncio.versao },
+      { ...campos, $inc: { versao: 1 } },
       { new: true }
     );
+
+    if (!atualizado) {
+      return res.status(409).json({
+        erro: 'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
+      });
+    }
 
     res.json(atualizado);
   } catch (error) {
@@ -204,10 +223,20 @@ async function atualizarPreco(req, res) {
       }
     }
 
-    anuncio.preco = Number(preco);
-    await anuncio.save();
+    // Optimistic locking: só salva se a versão não mudou desde a leitura
+    const atualizado = await Anuncio.findOneAndUpdate(
+      { _id: id, versao: anuncio.versao },
+      { preco: Number(preco), $inc: { versao: 1 } },
+      { new: true }
+    );
 
-    res.json(anuncio);
+    if (!atualizado) {
+      return res.status(409).json({
+        erro: 'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
+      });
+    }
+
+    res.json(atualizado);
   } catch (error) {
     const detalhe = error.response?.data || error.message;
     res.status(500).json({ erro: 'Erro ao atualizar preço.', detalhe });
@@ -235,10 +264,20 @@ async function atualizarEstoque(req, res) {
       }
     }
 
-    anuncio.estoque = Number(estoque);
-    await anuncio.save();
+    // Optimistic locking: só salva se a versão não mudou desde a leitura
+    const atualizado = await Anuncio.findOneAndUpdate(
+      { _id: id, versao: anuncio.versao },
+      { estoque: Number(estoque), $inc: { versao: 1 } },
+      { new: true }
+    );
 
-    res.json(anuncio);
+    if (!atualizado) {
+      return res.status(409).json({
+        erro: 'Conflito de atualização. O anúncio foi modificado por outra operação simultânea. Tente novamente.',
+      });
+    }
+
+    res.json(atualizado);
   } catch (error) {
     const detalhe = error.response?.data || error.message;
     res.status(500).json({ erro: 'Erro ao atualizar estoque.', detalhe });
