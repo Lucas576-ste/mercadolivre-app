@@ -95,11 +95,31 @@ export class ListagemComponent implements OnInit, OnDestroy {
     });
   }
 
+  alterandoStatus = new Set<string>();
+
   abrirModalPreco(a: Anuncio): void { this.anuncioModalPreco = a; }
   abrirModalEstoque(a: Anuncio): void { this.anuncioModalEstoque = a; }
 
   onModalPrecoSalvo(): void { this.anuncioModalPreco = null; this.carregar(); }
   onModalEstoqueSalvo(): void { this.anuncioModalEstoque = null; this.carregar(); }
+
+  alterarStatus(a: Anuncio): void {
+    if (this.alterandoStatus.has(a._id)) return;
+    const novoStatus: 'active' | 'paused' = a.status === 'active' ? 'paused' : 'active';
+    this.alterandoStatus.add(a._id);
+    this.service.alterarStatus(a._id, novoStatus).subscribe({
+      next: () => {
+        this.alterandoStatus.delete(a._id);
+        const label = novoStatus === 'paused' ? 'Anúncio pausado.' : 'Anúncio reativado.';
+        this.toast.sucesso(label);
+        this.carregar();
+      },
+      error: (err) => {
+        this.alterandoStatus.delete(a._id);
+        this.toast.erro(err?.error?.erro ?? 'Erro ao alterar status.');
+      },
+    });
+  }
 
   formatarPreco(v: number): string {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -107,9 +127,29 @@ export class ListagemComponent implements OnInit, OnDestroy {
 
   labelCategoria(cat: string): string {
     const map: Record<string, string> = {
-      eletronicos: 'Eletrônicos', esportes: 'Esportes',
-      'casa-jardim': 'Casa e Jardim', moda: 'Moda',
-      veiculos: 'Veículos', outros: 'Outros',
+      // ML category IDs (Brazil)
+      MLB1000: 'Eletrônicos, Áudio e Vídeo',
+      MLB1276: 'Informática',
+      MLB1144: 'Celulares e Telefones',
+      MLB5672: 'Esportes e Fitness',
+      MLB1574: 'Casa, Móveis e Decoração',
+      MLB1430: 'Moda e Acessórios',
+      MLB1743: 'Veículos e Peças',
+      MLB1499: 'Ferramentas e Construção',
+      MLB1648: 'Brinquedos e Hobbies',
+      MLB1051: 'Beleza e Cuidado Pessoal',
+      MLB1132: 'Livros, Revistas e Comics',
+      MLB1953: 'Alimentos e Bebidas',
+      MLB3937: 'Animais e Mascotas',
+      MLB1039: 'Arte, Artesanato e Costura',
+      MLB1168: 'Música e Shows',
+      // Legacy slug keys (backward compat)
+      eletronicos: 'Eletrônicos',
+      esportes: 'Esportes',
+      'casa-jardim': 'Casa e Jardim',
+      moda: 'Moda',
+      veiculos: 'Veículos',
+      outros: 'Outros',
     };
     return map[cat] ?? cat;
   }

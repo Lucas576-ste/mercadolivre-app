@@ -9,6 +9,7 @@ const {
   atualizarPreco,
   atualizarEstoque,
   sincronizar,
+  alterarStatus,
 } = require('../controller/anuncio.controller');
 
 router.use(authMiddleware);
@@ -20,5 +21,6 @@ router.post('/', criar);
 router.put('/:id', editar);
 router.patch('/:id/preco', atualizarPreco);
 router.patch('/:id/estoque', atualizarEstoque);
+router.patch('/:id/status', alterarStatus);
 
 module.exports = router;

@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AnuncioService } from '../../services/anuncio.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-modal-estoque',
@@ -18,6 +19,7 @@ export class ModalEstoqueComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private service = inject(AnuncioService);
+  private toast = inject(ToastService);
 
   form!: FormGroup;
   salvando = false;
@@ -36,11 +38,13 @@ export class ModalEstoqueComponent implements OnInit {
     this.service.atualizarEstoque(this.anuncio._id, Number(this.form.value.novaQuantidade)).subscribe({
       next: () => {
         this.salvando = false;
+        this.toast.sucesso('Estoque atualizado com sucesso!');
         this.salvo.emit();
         this.fechar.emit();
       },
-      error: () => {
-        this.erro = 'Erro ao atualizar estoque.';
+      error: (err) => {
+        this.erro = err?.error?.erro ?? 'Erro ao atualizar estoque.';
+        this.toast.erro(this.erro);
         this.salvando = false;
       },
     });

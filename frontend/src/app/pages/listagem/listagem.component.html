@@ -32,14 +32,16 @@
       <select [(ngModel)]="categoriaFiltro" (change)="onFiltroChange()"
               class="w-[160px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
                      bg-white cursor-pointer outline-none focus:border-[#FFE600] transition-colors">
-        <option value="" disabled selected>Categorias</option>
-        <option value="">Todas</option>
-        <option value="eletronicos">Eletrônicos</option>
-        <option value="esportes">Esportes</option>
-        <option value="casa-jardim">Casa e Jardim</option>
-        <option value="moda">Moda</option>
-        <option value="veiculos">Veículos</option>
-        <option value="outros">Outros</option>
+        <option value="">Todas as categorias</option>
+        <option value="MLB1000">Eletrônicos</option>
+        <option value="MLB1276">Informática</option>
+        <option value="MLB1144">Celulares</option>
+        <option value="MLB5672">Esportes</option>
+        <option value="MLB1574">Casa e Decoração</option>
+        <option value="MLB1430">Moda</option>
+        <option value="MLB1743">Veículos</option>
+        <option value="MLB1499">Ferramentas</option>
+        <option value="MLB1648">Brinquedos</option>
       </select>
 
       <!-- Sincronizar -->
@@ -72,7 +74,7 @@
             <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[140px]">Preço</th>
             <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[100px]">Estoque</th>
             <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[120px]">Status</th>
-            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[100px]">Ações</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-[#9ca3af] uppercase tracking-[0.05em] w-[120px]">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -98,7 +100,20 @@
           } @else {
             @for (a of anuncios; track a._id) {
               <tr class="border-b border-[#f9fafb] hover:bg-[#fafafa] transition-colors duration-100">
-                <td class="px-4 py-[14px] text-[14px] font-medium text-[#1a1a2e]">{{ a.titulo }}</td>
+                <!-- Título + thumbnail -->
+                <td class="px-4 py-[14px]">
+                  <div class="flex items-center gap-3">
+                    @if (a.fotos && a.fotos.length > 0) {
+                      <img [src]="a.fotos[0]" alt="foto"
+                           class="w-9 h-9 rounded-md object-cover border border-[#e5e7eb] flex-shrink-0" />
+                    } @else {
+                      <div class="w-9 h-9 rounded-md bg-[#f3f4f6] flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-image text-[#d1d5db] text-[14px]"></i>
+                      </div>
+                    }
+                    <span class="text-[14px] font-medium text-[#1a1a2e] leading-tight">{{ a.titulo }}</span>
+                  </div>
+                </td>
                 <td class="px-4 py-[14px] text-[14px] text-[#6b7280]">{{ labelCategoria(a.categoria) }}</td>
                 <td class="px-4 py-[14px] text-[14px] font-medium text-[#1a1a2e]">{{ formatarPreco(a.preco) }}</td>
                 <td class="px-4 py-[14px] text-[14px] text-[#374151]">{{ a.estoque }}</td>
@@ -115,13 +130,27 @@
                   <div class="flex items-center gap-3">
                     <i class="fa-solid fa-pen text-[14px] text-[#6b7280] cursor-pointer p-1
                                hover:text-[#374151] transition-colors"
+                       title="Editar anúncio"
                        (click)="router.navigate(['/anuncios', a._id, 'editar'])"></i>
                     <i class="fa-solid fa-tag text-[14px] text-[#16a34a] cursor-pointer p-1
                                hover:text-[#15803d] transition-colors"
+                       title="Alterar preço"
                        (click)="abrirModalPreco(a)"></i>
                     <i class="fa-solid fa-box text-[14px] text-[#3B82F6] cursor-pointer p-1
                                hover:text-[#1d4ed8] transition-colors"
+                       title="Alterar estoque"
                        (click)="abrirModalEstoque(a)"></i>
+                    @if (a.status === 'active') {
+                      <i class="fa-solid fa-pause text-[14px] cursor-pointer p-1 transition-colors"
+                         [class]="alterandoStatus.has(a._id) ? 'text-[#d1d5db] cursor-not-allowed' : 'text-[#f59e0b] hover:text-[#d97706]'"
+                         title="Pausar anúncio"
+                         (click)="alterarStatus(a)"></i>
+                    } @else if (a.status === 'paused') {
+                      <i class="fa-solid fa-play text-[14px] cursor-pointer p-1 transition-colors"
+                         [class]="alterandoStatus.has(a._id) ? 'text-[#d1d5db] cursor-not-allowed' : 'text-[#16a34a] hover:text-[#15803d]'"
+                         title="Reativar anúncio"
+                         (click)="alterarStatus(a)"></i>
+                    }
                   </div>
                 </td>
               </tr>

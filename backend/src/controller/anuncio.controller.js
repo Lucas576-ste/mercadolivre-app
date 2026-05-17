@@ -34,4 +34,10 @@ const sincronizar = asyncHandler(async (req, res) => {
   res.json(await anuncioService.sincronizar());
 });
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar };
+const alterarStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  if (!status) throw new ValidationException('Status é obrigatório.');
+  res.json(await anuncioService.alterarStatus(req.params.id, status));
+});
+
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus };

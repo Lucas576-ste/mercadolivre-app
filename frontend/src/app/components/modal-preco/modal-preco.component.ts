@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AnuncioService } from '../../services/anuncio.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-modal-preco',
@@ -18,6 +19,7 @@ export class ModalPrecoComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private service = inject(AnuncioService);
+  private toast = inject(ToastService);
 
   form!: FormGroup;
   salvando = false;
@@ -43,11 +45,13 @@ export class ModalPrecoComponent implements OnInit {
     this.service.atualizarPreco(this.anuncio._id, Number(this.form.value.novoPreco)).subscribe({
       next: () => {
         this.salvando = false;
+        this.toast.sucesso('Preço atualizado com sucesso!');
         this.salvo.emit();
         this.fechar.emit();
       },
-      error: () => {
-        this.erro = 'Erro ao atualizar preço.';
+      error: (err) => {
+        this.erro = err?.error?.erro ?? 'Erro ao atualizar preço.';
+        this.toast.erro(this.erro);
         this.salvando = false;
       },
     });

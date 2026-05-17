@@ -4,6 +4,7 @@ const { mlRequest, mlPublicRequest } = require('./mlApi.service');
 const NotFoundException      = require('../domain/exception/NotFoundException');
 const ConflictException      = require('../domain/exception/ConflictException');
 const MercadoLivreException  = require('../domain/exception/MercadoLivreException');
+const ValidationException    = require('../domain/exception/ValidationException');
 
 // ── Helpers ML públicos ────────────────────────────────────────────────────
 
@@ -244,4 +245,34 @@ async function sincronizar() {
   return { mensagem: 'Sincronização concluída.', sincronizados };
 }
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar };
+async function alterarStatus(id, status) {
+  const statusValidos = ['active', 'paused'];
+  if (!statusValidos.includes(status))
+    throw new ValidationException('Status inválido. Use "active" ou "paused".');
+
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
+
+  if (anuncio.status === 'closed')
+    throw new ValidationException('Anúncios fechados não podem ser reativados por esta interface.');
+
+  if (anuncio.ml_id) {
+    try {
+      await mlRequest('put', `/items/${anuncio.ml_id}`, { status });
+    } catch (mlError) {
+      throw new MercadoLivreException(
+        'Erro ao alterar status no Mercado Livre.',
+        mlError.response?.data || mlError.message
+      );
+    }
+  }
+
+  const atualizado = await AnuncioRepository.updateWithLock(id, anuncio.versao, { status });
+  if (!atualizado) throw new ConflictException(
+    'Conflito de atualização. Tente novamente.'
+  );
+
+  return atualizado;
+}
+
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus };

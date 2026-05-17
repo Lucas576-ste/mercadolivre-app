@@ -96,4 +96,8 @@ export class AnuncioService {
     const params = new HttpParams().set('titulo', titulo);
     return this.http.get<CategoriaSugerida>(`${this.categoriasBase}/sugerir`, { params });
   }
+
+  alterarStatus(id: string, status: 'active' | 'paused'): Observable<Anuncio> {
+    return this.http.patch<Anuncio>(`${this.base}/${id}/status`, { status });
+  }
 }
