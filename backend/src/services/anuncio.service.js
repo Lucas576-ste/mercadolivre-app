@@ -1,23 +1,14 @@
-const axios = require('axios');
 const Anuncio = require('../models/Anuncio');
 const Token = require('../models/Token');
-const { mlRequest } = require('./mlApi.service');
-
-// Erro tipado para que o controller saiba qual HTTP status retornar
-class ServiceError extends Error {
-  constructor(mensagem, status = 500, detalhe = null) {
-    super(mensagem);
-    this.status = status;
-    this.detalhe = detalhe;
-  }
-}
+const { mlRequest, mlPublicRequest } = require('./mlApi.service');
+const ServiceError = require('../utils/ServiceError');
 
 // ── Helpers ML públicos (sem autenticação) ─────────────────────────────────
 
 async function detectarCategoria(titulo, categoriaFallback) {
   try {
-    const { data } = await axios.get(
-      `https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`
+    const data = await mlPublicRequest(
+      `/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`
     );
     if (data && data[0]?.category_id) return data[0].category_id;
   } catch {
@@ -28,9 +19,7 @@ async function detectarCategoria(titulo, categoriaFallback) {
 
 async function montarAtributos(categoryId, titulo) {
   try {
-    const { data: attrs } = await axios.get(
-      `https://api.mercadolibre.com/categories/${categoryId}/attributes`
-    );
+    const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
     const obrigatorios = attrs.filter(a => a.tags?.required);
 
     return obrigatorios.map(attr => {

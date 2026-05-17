@@ -59,4 +59,10 @@ async function mlRequest(method, url, data = null) {
   return response.data;
 }
 
-module.exports = { mlRequest, getValidToken };
+// Chamadas à API pública do ML (sem autenticação) — aproveita o mesmo cliente com retry
+async function mlPublicRequest(path) {
+  const response = await mlClient.get(path);
+  return response.data;
+}
+
+module.exports = { mlRequest, mlPublicRequest, getValidToken, refreshAccessToken };
