@@ -102,7 +102,7 @@
                 >
                   <option value="" disabled>Selecione uma categoria</option>
                   @if (categoriaDetectadaForaDaLista) {
-                    <option [value]="categoriaSugerida!.category_id">
+                    <option [value]="categoriaSugerida!.category_id!">
                       {{ categoriaSugerida!.category_name }} (detectada)
                     </option>
                   }
