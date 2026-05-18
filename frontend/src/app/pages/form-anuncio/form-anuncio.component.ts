@@ -275,19 +275,9 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
 
     const raw = this.form.value;
 
-    const atributos: AtributoValor[] = this.atributos.map(a => {
-      const val = this.atributosValores[a.id] ?? '';
-      if (a.tipo === 'list' && a.valores) {
-        const v = a.valores.find(x => x.id === val);
-        return { id: a.id, value_id: val, value_name: v?.nome ?? val };
-      }
-      return { id: a.id, value_name: val };
-    }).filter(a => a.value_name || a.value_id);
-
     const payload = {
       ...raw,
       fotos: (raw.fotos as string[]).filter((u: string) => u.trim() !== ''),
-      ...(atributos.length > 0 && { atributos }),
     };
 
     const req = this.editando && this.anuncioId

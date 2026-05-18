@@ -77,7 +77,7 @@ async function buscarPorId(id) {
 async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos, atributos }) {
   const categoryId = await detectarCategoria(titulo, categoria);
   const [attributes, categoria_nome] = await Promise.all([
-    (atributos && atributos.length > 0) ? atributos : montarAtributos(categoryId, titulo),
+    montarAtributos(categoryId, titulo),
     buscarNomeCategoria(categoryId),
   ]);
 
