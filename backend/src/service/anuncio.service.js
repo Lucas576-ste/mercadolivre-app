@@ -264,12 +264,14 @@ async function sincronizar() {
     }));
 
     for (const item of itensValidos) {
-      const { id, title, price, available_quantity, status, category_id, condition, listing_type_id, permalink } = item.body;
+      const { id, title, price, available_quantity, status, category_id, condition, listing_type_id, permalink, pictures } = item.body;
+      const fotos = (pictures || []).map(p => p.secure_url || p.url).filter(Boolean);
       await AnuncioRepository.upsertByMlId(id, {
         ml_id: id, titulo: title, preco: price, estoque: available_quantity,
         status, categoria: category_id, categoria_nome: nomesPorCategoria[category_id],
         condicao: condition, tipo_listagem: listing_type_id,
         permalink: permalink ?? null,
+        fotos,
       });
       sincronizados++;
     }
