@@ -34,4 +34,11 @@ async function upsertByMlId(mlId, data) {
   );
 }
 
-module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId };
+async function adicionarCampoVersaoSeAusente() {
+  return Anuncio.updateMany(
+    { versao: { $exists: false } },
+    { $set: { versao: 0 } }
+  );
+}
+
+module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId, adicionarCampoVersaoSeAusente };

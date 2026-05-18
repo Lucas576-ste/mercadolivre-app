@@ -1,6 +1,7 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const TokenRepository = require('../repository/TokenRepository');
+const UnauthorizedException = require('../domain/exception/UnauthorizedException');
 
 const mlClient = axios.create({
   baseURL: 'https://api.mercadolibre.com',
@@ -18,7 +19,7 @@ axiosRetry(mlClient, {
 
 async function getToken() {
   const token = await TokenRepository.findFirst();
-  if (!token) throw new Error('Usuário não autenticado. Faça login pelo /auth/login');
+  if (!token) throw new UnauthorizedException('Não autenticado. Acesse /auth/login para conectar sua conta do Mercado Livre.');
   return token;
 }
 

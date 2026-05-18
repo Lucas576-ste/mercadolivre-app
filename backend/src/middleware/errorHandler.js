@@ -1,12 +1,17 @@
-const NotFoundException     = require('../domain/exception/NotFoundException');
-const ConflictException     = require('../domain/exception/ConflictException');
-const MercadoLivreException = require('../domain/exception/MercadoLivreException');
-const ValidationException   = require('../domain/exception/ValidationException');
+const NotFoundException       = require('../domain/exception/NotFoundException');
+const ConflictException       = require('../domain/exception/ConflictException');
+const MercadoLivreException   = require('../domain/exception/MercadoLivreException');
+const ValidationException     = require('../domain/exception/ValidationException');
+const UnauthorizedException   = require('../domain/exception/UnauthorizedException');
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(error, req, res, next) {
   if (error instanceof ValidationException) {
     return res.status(400).json({ erro: error.message });
+  }
+
+  if (error instanceof UnauthorizedException) {
+    return res.status(401).json({ erro: error.message });
   }
 
   if (error instanceof NotFoundException) {
