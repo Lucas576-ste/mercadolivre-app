@@ -29,23 +29,31 @@ async function buscarNomeCategoria(categoryId) {
   }
 }
 
+const IDENTIFICADORES_PRODUTO = new Set(['GTIN', 'ISBN', 'EAN', 'UPC', 'MPN']);
+
 async function montarAtributos(categoryId, titulo) {
   try {
     const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
-    return attrs
-      .filter(a => a.tags?.required)
-      .map(attr => {
-        if (attr.value_type === 'list' && attr.values?.length > 0)
-          return { id: attr.id, value_id: attr.values[0].id, value_name: attr.values[0].name };
-        if (attr.value_type === 'boolean') {
-          const falso = attr.values?.find(v => v.name === 'Não' || v.name === 'No');
-          return falso
-            ? { id: attr.id, value_id: falso.id, value_name: falso.name }
-            : { id: attr.id, value_name: 'Não' };
-        }
-        if (attr.value_type === 'number') return { id: attr.id, value_name: '0' };
-        return { id: attr.id, value_name: titulo };
-      });
+    const resultado = [];
+    for (const attr of attrs) {
+      if (!attr.tags?.required && !attr.tags?.catalog_required) continue;
+      // Identificadores de produto exigem formato específico — pular para evitar erro de validação
+      if (IDENTIFICADORES_PRODUTO.has(attr.id) || attr.tags?.catalog_product_id) continue;
+
+      if (attr.value_type === 'list' && attr.values?.length > 0) {
+        resultado.push({ id: attr.id, value_id: attr.values[0].id, value_name: attr.values[0].name });
+      } else if (attr.value_type === 'boolean') {
+        const falso = attr.values?.find(v => v.name === 'Não' || v.name === 'No');
+        resultado.push(falso
+          ? { id: attr.id, value_id: falso.id, value_name: falso.name }
+          : { id: attr.id, value_name: 'Não' });
+      } else if (attr.value_type === 'number') {
+        resultado.push({ id: attr.id, value_name: '0' });
+      } else {
+        resultado.push({ id: attr.id, value_name: titulo });
+      }
+    }
+    return resultado;
   } catch {
     return [];
   }
