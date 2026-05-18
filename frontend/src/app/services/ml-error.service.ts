@@ -7,7 +7,7 @@ interface MlCause {
   message: string;
 }
 
-const TRADUCOES: Record<string, string> = {
+const TRADUCOES: Record<string, string | null> = {
   'item.available_quantity.invalid':
     'Plano gratuito aceita no máximo 1 unidade em estoque.',
   'item.attribute.product_identifier.invalid_format':

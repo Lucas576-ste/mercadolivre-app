@@ -153,7 +153,7 @@
                         @if (attr.valores && attr.valores.length > 0) {
                           <select
                             class="field-input"
-                            [value]="atributosValores[attr.id] ?? ''"
+                            [value]="atributosValores[attr.id] || ''"
                             (change)="setValorAtributo(attr.id, $any($event.target).value)"
                           >
                             @for (v of attr.valores; track v.id) {
@@ -164,7 +164,7 @@
                           <input
                             [type]="attr.tipo === 'number' ? 'number' : 'text'"
                             class="field-input"
-                            [value]="atributosValores[attr.id] ?? ''"
+                            [value]="atributosValores[attr.id] || ''"
                             (input)="setValorAtributo(attr.id, $any($event.target).value)"
                             [placeholder]="attr.nome"
                           />
