@@ -129,7 +129,7 @@
                     <span class="text-[14px] font-medium text-[#1a1a2e] leading-tight">{{ a.titulo }}</span>
                   </div>
                 </td>
-                <td class="px-4 py-[14px] text-[14px] text-[#6b7280]">{{ labelCategoria(a.categoria) }}</td>
+                <td class="px-4 py-[14px] text-[14px] text-[#6b7280]">{{ a.categoria_nome || labelCategoria(a.categoria) }}</td>
                 <td class="px-4 py-[14px] text-[14px] font-medium text-[#1a1a2e]">{{ formatarPreco(a.preco) }}</td>
                 <td class="px-4 py-[14px] text-[14px] text-[#374151]">{{ a.estoque }}</td>
                 <td class="px-4 py-[14px]">

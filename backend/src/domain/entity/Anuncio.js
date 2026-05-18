@@ -7,6 +7,7 @@ const anuncioSchema = new mongoose.Schema({
   estoque:      { type: Number, required: true, default: 0 },
   status:       { type: String, enum: ['active', 'paused', 'closed'], default: 'active' },
   categoria:    { type: String, required: true },
+  categoria_nome: { type: String },
   descricao:    { type: String },
   condicao:     { type: String, enum: ['new', 'used'], default: 'new' },
   tipo_listagem:{ type: String, default: 'gold_special' },

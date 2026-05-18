@@ -24,6 +24,7 @@ export interface Anuncio extends AnuncioPayload {
   _id: string;
   ml_id?: string;
   status: string;
+  categoria_nome?: string;
   createdAt: string;
   updatedAt: string;
 }

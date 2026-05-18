@@ -20,6 +20,15 @@ async function detectarCategoria(titulo, categoriaFallback) {
   return categoriaFallback;
 }
 
+async function buscarNomeCategoria(categoryId) {
+  try {
+    const cat = await mlPublicRequest(`/categories/${categoryId}`);
+    return cat.name ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function montarAtributos(categoryId, titulo) {
   try {
     const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
@@ -67,9 +76,10 @@ async function buscarPorId(id) {
 
 async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos, atributos }) {
   const categoryId = await detectarCategoria(titulo, categoria);
-  const attributes = (atributos && atributos.length > 0)
-    ? atributos
-    : await montarAtributos(categoryId, titulo);
+  const [attributes, categoria_nome] = await Promise.all([
+    (atributos && atributos.length > 0) ? atributos : montarAtributos(categoryId, titulo),
+    buscarNomeCategoria(categoryId),
+  ]);
 
   const mlPayload = {
     title: titulo,
@@ -110,6 +120,7 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
       preco: Number(preco),
       estoque: Number(estoque),
       categoria: categoryId,
+      categoria_nome,
       condicao: condicao || 'new',
       tipo_listagem: mlPayload.listing_type_id,
       fotos: (fotos || []).filter(u => u?.trim()),
@@ -235,12 +246,20 @@ async function sincronizar() {
       console.warn('Erro ao buscar lote de itens:', mlError.response?.data || mlError.message);
       continue;
     }
-    for (const item of detalhes) {
-      if (item.code !== 200) continue;
+
+    const itensValidos = detalhes.filter(item => item.code === 200);
+    const categoryIds = [...new Set(itensValidos.map(item => item.body.category_id))];
+    const nomesPorCategoria = {};
+    await Promise.all(categoryIds.map(async (catId) => {
+      nomesPorCategoria[catId] = await buscarNomeCategoria(catId);
+    }));
+
+    for (const item of itensValidos) {
       const { id, title, price, available_quantity, status, category_id, condition, listing_type_id } = item.body;
       await AnuncioRepository.upsertByMlId(id, {
         ml_id: id, titulo: title, preco: price, estoque: available_quantity,
-        status, categoria: category_id, condicao: condition, tipo_listagem: listing_type_id,
+        status, categoria: category_id, categoria_nome: nomesPorCategoria[category_id],
+        condicao: condition, tipo_listagem: listing_type_id,
       });
       sincronizados++;
     }
