@@ -35,6 +35,18 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
   detectandoCategoria = false;
   categoriaSugerida: CategoriaSugerida | null = null;
 
+  private readonly CATEGORIAS_ESTATICAS = new Set([
+    'MLB5672','MLB1403','MLB1071','MLB1367','MLB1384','MLB1246','MLB1132',
+    'MLB1430','MLB1039','MLB1743','MLB1574','MLB1051','MLB1500','MLB5726',
+    'MLB1000','MLB1276','MLB263532','MLB1648','MLB1182','MLB1499',
+    'MLB218519','MLB1168','MLB1613','MLB1294',
+  ]);
+
+  get categoriaDetectadaForaDaLista(): boolean {
+    const id = this.categoriaSugerida?.category_id;
+    return !!id && !this.CATEGORIAS_ESTATICAS.has(id);
+  }
+
   // Atributos editáveis
   atributosValores: Record<string, string> = {};
   carregandoAtributos = false;
