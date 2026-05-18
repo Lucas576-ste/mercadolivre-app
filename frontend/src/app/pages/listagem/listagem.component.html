@@ -140,6 +140,8 @@
                     <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#dcfce7] text-[#16a34a]">Ativo</span>
                   } @else if (a.status === 'paused') {
                     <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#f3f4f6] text-[#6b7280]">Pausado</span>
+                  } @else if (a.status === 'under_review') {
+                    <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#fef9c3] text-[#a16207]">Em análise</span>
                   } @else {
                     <span class="inline-flex px-3 py-1 rounded-full text-[12px] font-medium bg-[#fee2e2] text-[#dc2626]">Fechado</span>
                   }
@@ -176,6 +178,9 @@
                          [class]="alterandoStatus.has(a._id) ? 'text-[#d1d5db] cursor-not-allowed' : 'text-[#16a34a] hover:text-[#15803d]'"
                          title="Reativar anúncio"
                          (click)="alterarStatus(a)"></i>
+                    } @else if (a.status === 'under_review') {
+                      <i class="fa-solid fa-clock text-[14px] p-1 text-[#a16207]"
+                         title="Em análise pelo Mercado Livre"></i>
                     }
                     <i class="fa-solid fa-trash text-[14px] cursor-pointer p-1 transition-colors"
                        [class]="excluindoId === a._id ? 'text-[#d1d5db] cursor-not-allowed' : 'text-[#ef4444] hover:text-[#b91c1c]'"

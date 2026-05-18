@@ -355,6 +355,8 @@ async function alterarStatus(id, status) {
 
   if (anuncio.status === 'closed')
     throw new ValidationException('Anúncios fechados não podem ser reativados por esta interface.');
+  if (anuncio.status === 'under_review')
+    throw new ValidationException('Anúncios em análise pelo Mercado Livre não podem ser alterados. Aguarde a revisão.');
 
   if (anuncio.ml_id) {
     try {
