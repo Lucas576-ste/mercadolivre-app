@@ -143,6 +143,14 @@
                 </td>
                 <td class="px-4 py-[14px]">
                   <div class="flex items-center gap-3">
+                    @if (a.ml_id) {
+                      <a [href]="'https://produto.mercadolivre.com.br/' + a.ml_id"
+                         target="_blank" rel="noopener noreferrer"
+                         title="Ver no Mercado Livre"
+                         class="p-1 text-[#FFE600] hover:text-[#d4b800] transition-colors">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[14px]"></i>
+                      </a>
+                    }
                     <i class="fa-solid fa-pen text-[14px] text-[#6b7280] cursor-pointer p-1
                                hover:text-[#374151] transition-colors"
                        title="Editar anúncio"
