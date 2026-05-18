@@ -4,7 +4,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
-import { AnuncioService, AtributoSugerido, AtributoValor, CategoriaSugerida } from '../../services/anuncio.service';
+import { AnuncioService, AtributoSugerido, CategoriaSugerida } from '../../services/anuncio.service';
 import { ToastService } from '../../services/toast.service';
 import { UploadService } from '../../services/upload.service';
 
@@ -44,7 +44,6 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
 
   // ── Título feedback ───────────────────────────────────────────────────────
   private readonly TITULO_IDEAL_MAX = 60;
-  private readonly TITULO_MAX = 60;
   private readonly TITULO_CHARS_PROIBIDOS = /["<>]/;
 
   get tituloLength(): number {
