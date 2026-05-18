@@ -217,6 +217,46 @@
   </div>
 </div>
 
+<!-- Modal de confirmação de exclusão -->
+@if (confirmandoExcluir) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center"
+       style="background: rgba(0,0,0,0.35)"
+       (click)="confirmandoExcluir = null">
+    <div class="bg-white rounded-xl p-6 w-[380px] shadow-xl"
+         (click)="$event.stopPropagation()">
+      <div class="flex items-start gap-4 mb-5">
+        <div class="w-10 h-10 rounded-full bg-[#fee2e2] flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-trash text-[#ef4444] text-[16px]"></i>
+        </div>
+        <div>
+          <p class="text-[15px] font-semibold text-[#1a1a2e] mb-1">Excluir anúncio</p>
+          <p class="text-[13px] text-[#6b7280] leading-relaxed">
+            Tem certeza que deseja excluir
+            <span class="font-medium text-[#374151]">"{{ confirmandoExcluir.titulo }}"</span>?
+          </p>
+          @if (confirmandoExcluir.ml_id) {
+            <p class="text-[12px] text-[#9ca3af] mt-2">
+              O anúncio também será fechado no Mercado Livre.
+            </p>
+          }
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button (click)="confirmandoExcluir = null"
+                class="px-4 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb]
+                       rounded-lg hover:bg-[#f9fafb] transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button (click)="confirmarExclusao()"
+                class="px-4 py-2 text-[13px] font-medium text-white bg-[#ef4444]
+                       rounded-lg hover:bg-[#dc2626] transition-colors cursor-pointer border-none">
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- Modais -->
 @if (anuncioModalPreco) {
   <app-modal-preco [anuncio]="anuncioModalPreco"

@@ -97,6 +97,7 @@ export class ListagemComponent implements OnInit, OnDestroy {
 
   alterandoStatus = new Set<string>();
   excluindoId: string | null = null;
+  confirmandoExcluir: Anuncio | null = null;
 
   abrirModalPreco(a: Anuncio): void { this.anuncioModalPreco = a; }
   abrirModalEstoque(a: Anuncio): void { this.anuncioModalEstoque = a; }
@@ -127,7 +128,13 @@ export class ListagemComponent implements OnInit, OnDestroy {
   }
 
   excluir(a: Anuncio): void {
-    if (!confirm(`Excluir "${a.titulo}"?\n\nSe o anúncio estiver no Mercado Livre, ele será fechado automaticamente.`)) return;
+    this.confirmandoExcluir = a;
+  }
+
+  confirmarExclusao(): void {
+    const a = this.confirmandoExcluir;
+    if (!a) return;
+    this.confirmandoExcluir = null;
     this.excluindoId = a._id;
     this.service.excluirAnuncio(a._id).subscribe({
       next: () => {
