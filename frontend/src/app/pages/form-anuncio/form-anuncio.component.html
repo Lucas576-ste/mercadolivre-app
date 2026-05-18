@@ -125,7 +125,7 @@
                           <span class="atributos-info__nome">{{ attr.nome }}</span>
                           @if (attr.valores && attr.valores.length > 0) {
                             <span class="atributos-info__valores">
-                              ({{ attr.valores.slice(0, 3).map(v => v.nome).join(', ') }}{{ attr.valores.length > 3 ? '...' : '' }})
+                              ({{ resumoValores(attr) }})
                             </span>
                           }
                         </li>

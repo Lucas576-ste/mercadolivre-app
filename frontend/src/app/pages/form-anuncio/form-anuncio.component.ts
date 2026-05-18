@@ -45,6 +45,12 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
     return this.categoriaSugerida?.atributos ?? [];
   }
 
+  resumoValores(attr: AtributoSugerido): string {
+    if (!attr.valores || attr.valores.length === 0) return '';
+    const nomes = attr.valores.slice(0, 3).map(v => v.nome).join(', ');
+    return attr.valores.length > 3 ? `${nomes}...` : nomes;
+  }
+
   ngOnInit(): void {
     this.form = this.fb.group({
       titulo:    ['', Validators.required],
