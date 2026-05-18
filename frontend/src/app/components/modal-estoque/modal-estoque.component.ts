@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AnuncioService } from '../../services/anuncio.service';
 import { ToastService } from '../../services/toast.service';
+import { MlErrorService } from '../../services/ml-error.service';
 
 @Component({
   selector: 'app-modal-estoque',
@@ -20,6 +21,7 @@ export class ModalEstoqueComponent implements OnInit {
   private fb = inject(FormBuilder);
   private service = inject(AnuncioService);
   private toast = inject(ToastService);
+  private mlError = inject(MlErrorService);
 
   form!: FormGroup;
   salvando = false;
@@ -43,8 +45,8 @@ export class ModalEstoqueComponent implements OnInit {
         this.fechar.emit();
       },
       error: (err) => {
+        this.mlError.mostrarErros(err);
         this.erro = err?.error?.erro ?? 'Erro ao atualizar estoque.';
-        this.toast.erro(this.erro);
         this.salvando = false;
       },
     });

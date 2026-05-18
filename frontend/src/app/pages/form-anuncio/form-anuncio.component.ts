@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
 import { AnuncioService, AtributoSugerido, CategoriaSugerida } from '../../services/anuncio.service';
 import { ToastService } from '../../services/toast.service';
+import { MlErrorService } from '../../services/ml-error.service';
 import { UploadService } from '../../services/upload.service';
 
 @Component({
@@ -22,6 +23,7 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
   private anuncioService = inject(AnuncioService);
   private uploadService = inject(UploadService);
   private toast = inject(ToastService);
+  private mlError = inject(MlErrorService);
   private destroy$ = new Subject<void>();
 
   form!: FormGroup;
@@ -301,8 +303,8 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
         this.router.navigate(['/anuncios']);
       },
       error: (err) => {
+        this.mlError.mostrarErros(err);
         this.erro = err?.error?.erro ?? 'Ocorreu um erro. Tente novamente.';
-        this.toast.erro(this.erro);
         this.salvando = false;
       },
     });
