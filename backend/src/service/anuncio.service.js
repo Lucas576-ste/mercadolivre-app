@@ -177,7 +177,7 @@ async function editar(id, { titulo, preco, estoque, descricao, condicao, fotos }
   const mlPayload = {};
   if (titulo   !== undefined) mlPayload.title              = titulo;
   if (preco    !== undefined) mlPayload.price              = Number(preco);
-  if (estoque  !== undefined) mlPayload.available_quantity = Number(estoque);
+  if (estoque  !== undefined) mlPayload.available_quantity = anuncio.tipo_listagem === 'free' ? 1 : Number(estoque);
   if (condicao !== undefined) mlPayload.condition          = condicao;
   if (fotos    !== undefined) mlPayload.pictures           = fotos.filter(u => u?.trim()).map(u => ({ source: u }));
 
@@ -252,7 +252,8 @@ async function atualizarEstoque(id, estoque) {
 
   if (anuncio.ml_id) {
     try {
-      await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
+      const qtd = anuncio.tipo_listagem === 'free' ? 1 : Number(estoque);
+      await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: qtd });
     } catch (mlError) {
       const itemFechado = mlError.response?.data?.message?.includes('status:closed');
       if (!itemFechado) {
