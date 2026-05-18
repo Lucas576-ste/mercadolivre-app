@@ -2,6 +2,10 @@ const axios = require('axios');
 const ValidationException = require('../domain/exception/ValidationException');
 
 async function uploadParaImgBB(buffer, nomeArquivo) {
+  if (!process.env.IMGBB_API_KEY) {
+    throw new ValidationException('Serviço de upload não configurado. Contate o administrador.');
+  }
+
   const base64 = buffer.toString('base64');
 
   const params = new URLSearchParams();
@@ -9,14 +13,20 @@ async function uploadParaImgBB(buffer, nomeArquivo) {
   params.append('image', base64);
   params.append('name', nomeArquivo);
 
-  const { data } = await axios.post('https://api.imgbb.com/1/upload', params, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    timeout: 15000,
-  });
+  try {
+    const { data } = await axios.post('https://api.imgbb.com/1/upload', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeout: 15000,
+    });
 
-  if (!data.success) throw new ValidationException('Falha no upload da imagem.');
+    if (!data.success) throw new ValidationException('ImgBB rejeitou o upload. Verifique a chave de API.');
 
-  return data.data.display_url;
+    return data.data.display_url;
+  } catch (err) {
+    if (err instanceof ValidationException) throw err;
+    const detalhe = err?.response?.data?.error?.message ?? err.message;
+    throw new ValidationException(`Erro ao fazer upload da imagem: ${detalhe}`);
+  }
 }
 
 module.exports = { uploadParaImgBB };
