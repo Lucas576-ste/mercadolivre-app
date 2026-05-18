@@ -3,7 +3,7 @@
 Aplicação web fullstack para gerenciar anúncios no Mercado Livre. Permite criar, editar, pausar, sincronizar e excluir anúncios diretamente pela interface, com integração via OAuth 2.0 com a API oficial do ML.
 
 **Demo em produção:**
-- Frontend: https://mercadolivre-app.vercel.app
+- Frontend: https://mercadolivre-app-lemon.vercel.app
 - Backend: https://ml-gestor.onrender.com
 
 ---
