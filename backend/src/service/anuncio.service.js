@@ -125,6 +125,7 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
       tipo_listagem: mlPayload.listing_type_id,
       fotos: (fotos || []).filter(u => u?.trim()),
       status: mlResposta.status,
+      permalink: mlResposta.permalink ?? null,
     });
   } catch (dbError) {
     if (dbError.code === 11000)
@@ -263,11 +264,12 @@ async function sincronizar() {
     }));
 
     for (const item of itensValidos) {
-      const { id, title, price, available_quantity, status, category_id, condition, listing_type_id } = item.body;
+      const { id, title, price, available_quantity, status, category_id, condition, listing_type_id, permalink } = item.body;
       await AnuncioRepository.upsertByMlId(id, {
         ml_id: id, titulo: title, preco: price, estoque: available_quantity,
         status, categoria: category_id, categoria_nome: nomesPorCategoria[category_id],
         condicao: condition, tipo_listagem: listing_type_id,
+        permalink: permalink ?? null,
       });
       sincronizados++;
     }

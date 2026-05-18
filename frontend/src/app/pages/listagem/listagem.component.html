@@ -143,8 +143,8 @@
                 </td>
                 <td class="px-4 py-[14px]">
                   <div class="flex items-center gap-3">
-                    @if (a.ml_id) {
-                      <a [href]="'https://produto.mercadolivre.com.br/' + a.ml_id"
+                    @if (a.permalink) {
+                      <a [href]="a.permalink"
                          target="_blank" rel="noopener noreferrer"
                          title="Ver no Mercado Livre"
                          class="p-1 text-[#FFE600] hover:text-[#d4b800] transition-colors">
