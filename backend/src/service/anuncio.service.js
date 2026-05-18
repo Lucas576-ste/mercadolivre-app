@@ -8,12 +8,40 @@ const ValidationException    = require('../domain/exception/ValidationException'
 
 // ── Helpers ML públicos ────────────────────────────────────────────────────
 
+async function categoriaExigeIdentificador(categoryId) {
+  try {
+    const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
+    return attrs.some(a =>
+      a.tags?.required && (IDENTIFICADORES_PRODUTO.has(a.id) || a.tags?.catalog_product_id)
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function categoriaPai(categoryId) {
+  try {
+    const cat = await mlPublicRequest(`/categories/${categoryId}`);
+    const path = cat.path_from_root || [];
+    return path.length >= 2 ? path[path.length - 2].id : null;
+  } catch {
+    return null;
+  }
+}
+
 async function detectarCategoria(titulo, categoriaFallback) {
   try {
     const data = await mlPublicRequest(
       `/sites/MLB/domain_discovery/search?q=${encodeURIComponent(titulo)}&limit=1`
     );
-    if (data?.[0]?.category_id) return data[0].category_id;
+    if (data?.[0]?.category_id) {
+      const id = data[0].category_id;
+      if (await categoriaExigeIdentificador(id)) {
+        const pai = await categoriaPai(id);
+        return pai ?? categoriaFallback;
+      }
+      return id;
+    }
   } catch {
     // fallback silencioso
   }
