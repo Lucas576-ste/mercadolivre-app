@@ -1,7 +1,18 @@
 const axios = require('axios');
 const ValidationException = require('../domain/exception/ValidationException');
 
-async function uploadParaImgBB(buffer, nomeArquivo) {
+const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const TAMANHO_MAXIMO = 5 * 1024 * 1024;
+
+async function uploadParaImgBB(buffer, nomeArquivo, mimetype) {
+  if (!TIPOS_PERMITIDOS.includes(mimetype)) {
+    throw new ValidationException('Tipo de arquivo não permitido. Use JPG, PNG, WEBP ou GIF.');
+  }
+
+  if (buffer.length > TAMANHO_MAXIMO) {
+    throw new ValidationException('Arquivo muito grande. Máximo 5MB.');
+  }
+
   if (!process.env.IMGBB_API_KEY) {
     throw new ValidationException('Serviço de upload não configurado. Contate o administrador.');
   }

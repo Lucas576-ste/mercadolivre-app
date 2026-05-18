@@ -168,6 +168,7 @@ async function editar(id, { titulo, preco, estoque, descricao, condicao, fotos }
 }
 
 async function atualizarPreco(id, preco) {
+  if (isNaN(preco) || Number(preco) <= 0) throw new ValidationException('Preço inválido.');
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
@@ -193,6 +194,7 @@ async function atualizarPreco(id, preco) {
 }
 
 async function atualizarEstoque(id, estoque) {
+  if (isNaN(estoque) || Number(estoque) < 0) throw new ValidationException('Estoque inválido.');
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 

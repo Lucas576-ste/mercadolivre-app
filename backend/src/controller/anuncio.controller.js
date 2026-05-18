@@ -19,15 +19,13 @@ const editar = asyncHandler(async (req, res) => {
 });
 
 const atualizarPreco = asyncHandler(async (req, res) => {
-  const { preco } = req.body;
-  if (preco === undefined || isNaN(preco)) throw new ValidationException('Preço inválido.');
-  res.json(await anuncioService.atualizarPreco(req.params.id, preco));
+  if (req.body.preco === undefined) throw new ValidationException('Preço é obrigatório.');
+  res.json(await anuncioService.atualizarPreco(req.params.id, req.body.preco));
 });
 
 const atualizarEstoque = asyncHandler(async (req, res) => {
-  const { estoque } = req.body;
-  if (estoque === undefined || isNaN(estoque)) throw new ValidationException('Estoque inválido.');
-  res.json(await anuncioService.atualizarEstoque(req.params.id, estoque));
+  if (req.body.estoque === undefined) throw new ValidationException('Estoque é obrigatório.');
+  res.json(await anuncioService.atualizarEstoque(req.params.id, req.body.estoque));
 });
 
 const sincronizar = asyncHandler(async (req, res) => {
