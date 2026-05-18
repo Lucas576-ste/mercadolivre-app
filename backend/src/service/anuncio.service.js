@@ -183,7 +183,7 @@ async function atualizarPreco(id, preco) {
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
-  if (anuncio.ml_id) {
+  if (anuncio.ml_id && anuncio.status !== 'closed') {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, {
         price: Number(preco),
@@ -209,7 +209,7 @@ async function atualizarEstoque(id, estoque) {
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
-  if (anuncio.ml_id) {
+  if (anuncio.ml_id && anuncio.status !== 'closed') {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
     } catch (mlError) {
