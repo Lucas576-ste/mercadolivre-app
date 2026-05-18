@@ -68,8 +68,26 @@ async function mlPublicRequest(path) {
 // Baixa uma imagem de uma URL externa e faz upload binário para o CDN do ML.
 // Retorna { id } se bem-sucedido ou null se falhar.
 async function mlUploadFoto(url) {
+  const token = await getValidToken();
+
+  // Tentativa 1: upload via JSON source (mais simples, ML baixa a imagem)
   try {
-    const imgRes = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
+    const res = await axios.post(
+      'https://api.mercadolibre.com/pictures',
+      { source: url },
+      { headers: { Authorization: `Bearer ${token.access_token}` }, timeout: 20000 }
+    );
+    if (res.data?.id) {
+      console.log('[ML] Foto enviada via source:', res.data.id);
+      return { id: res.data.id };
+    }
+  } catch (e1) {
+    console.warn('[ML] Falha via source, tentando upload binário:', e1.response?.data || e1.message);
+  }
+
+  // Tentativa 2: baixar a imagem e fazer upload binário via multipart
+  try {
+    const imgRes = await axios.get(url, { responseType: 'arraybuffer', timeout: 20000 });
     const buffer = Buffer.from(imgRes.data);
     const contentType = imgRes.headers['content-type'] || 'image/jpeg';
     const ext = contentType.split('/')[1]?.split(';')[0] || 'jpg';
@@ -77,19 +95,21 @@ async function mlUploadFoto(url) {
     const form = new FormData();
     form.append('file', buffer, { filename: `photo.${ext}`, contentType });
 
-    const token = await getValidToken();
-    const response = await mlClient({
-      method: 'post',
-      url: '/pictures/items/upload',
-      headers: { Authorization: `Bearer ${token.access_token}`, ...form.getHeaders() },
-      data: form,
-    });
+    const res2 = await axios.post(
+      'https://api.mercadolibre.com/pictures/items/upload',
+      form,
+      { headers: { Authorization: `Bearer ${token.access_token}`, ...form.getHeaders() }, timeout: 30000 }
+    );
 
-    return response.data?.id ? { id: response.data.id } : null;
-  } catch (e) {
-    console.warn('[ML] Falha ao fazer upload de foto:', e.message);
-    return null;
+    if (res2.data?.id) {
+      console.log('[ML] Foto enviada via multipart:', res2.data.id);
+      return { id: res2.data.id };
+    }
+  } catch (e2) {
+    console.error('[ML] Falha no upload binário:', e2.response?.data || e2.message);
   }
+
+  return null;
 }
 
 module.exports = { mlRequest, mlPublicRequest, getValidToken, refreshAccessToken, mlUploadFoto };

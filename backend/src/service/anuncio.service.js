@@ -91,8 +91,10 @@ async function uploadFotosParaML(fotos) {
   const urls = (fotos || []).filter(u => u?.trim());
   if (urls.length === 0) return [];
   const results = await Promise.all(urls.map(mlUploadFoto));
-  // Filtra apenas as que tiveram upload bem-sucedido (retornaram { id })
-  return results.filter(Boolean);
+  const validas = results.filter(Boolean);
+  if (validas.length === 0)
+    throw new ValidationException('Não foi possível enviar as fotos para o Mercado Livre. Verifique a imagem e tente novamente.');
+  return validas;
 }
 
 // ── Casos de uso ───────────────────────────────────────────────────────────
