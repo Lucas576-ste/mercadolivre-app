@@ -195,15 +195,52 @@
 
               <!-- Fotos -->
               <div formArrayName="fotos">
-                <label class="field-label">URLs das Fotos</label>
-                <div class="flex flex-col gap-[10px] mb-5">
+                <label class="field-label">Fotos do Produto</label>
+                <div class="flex flex-col gap-3 mb-4">
                   @for (ctrl of fotos.controls; track $index) {
-                    <input
-                      type="text"
-                      [formControlName]="$index"
-                      [placeholder]="fotosPlaceholders[$index]"
-                      class="field-input !mb-0"
-                    />
+                    <div class="flex items-center gap-3">
+                      <!-- Preview ou placeholder -->
+                      <div class="w-16 h-16 rounded-lg border-2 border-dashed border-[#e5e7eb]
+                                  flex items-center justify-center flex-shrink-0 overflow-hidden bg-[#f9fafb]">
+                        @if (uploadandoFoto.has($index)) {
+                          <i class="fa-solid fa-circle-notch fa-spin text-[#9ca3af] text-[18px]"></i>
+                        } @else if (ctrl.value) {
+                          <img [src]="ctrl.value" alt="foto" class="w-full h-full object-cover" />
+                        } @else {
+                          <i class="fa-solid fa-image text-[#d1d5db] text-[20px]"></i>
+                        }
+                      </div>
+
+                      <!-- Botões de ação -->
+                      <div class="flex flex-col gap-2 flex-1">
+                        <button
+                          type="button"
+                          (click)="selecionarArquivo($index)"
+                          [disabled]="uploadandoFoto.has($index)"
+                          class="flex items-center gap-2 px-3 py-2 border border-[#e5e7eb] rounded-lg
+                                 text-[13px] text-[#374151] bg-white hover:bg-[#f9fafb] transition-colors
+                                 disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                        >
+                          <i class="fa-solid fa-upload text-[12px] text-[#6b7280]"></i>
+                          {{ uploadandoFoto.has($index) ? 'Enviando...' : (ctrl.value ? 'Trocar foto' : 'Escolher arquivo') }}
+                        </button>
+                        @if (ctrl.value) {
+                          <span class="text-[11px] text-[#9ca3af] truncate max-w-[200px]">{{ ctrl.value }}</span>
+                        }
+                      </div>
+
+                      <!-- Remover -->
+                      @if (fotos.length > 1 || ctrl.value) {
+                        <button
+                          type="button"
+                          (click)="removerFoto($index)"
+                          class="p-1 text-[#9ca3af] hover:text-[#ef4444] transition-colors flex-shrink-0"
+                          title="Remover foto"
+                        >
+                          <i class="fa-solid fa-times text-[14px]"></i>
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
                 <button
@@ -212,7 +249,7 @@
                   class="text-[#3B82F6] text-[13px] cursor-pointer bg-transparent border-none p-0
                          hover:text-[#1d4ed8] transition-colors"
                 >
-                  + Adicionar mais
+                  + Adicionar mais fotos
                 </button>
               </div>
 

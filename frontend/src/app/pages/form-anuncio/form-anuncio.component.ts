@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
 import { AnuncioService, AtributoSugerido, CategoriaSugerida } from '../../services/anuncio.service';
 import { ToastService } from '../../services/toast.service';
+import { UploadService } from '../../services/upload.service';
 
 @Component({
   selector: 'app-form-anuncio',
@@ -19,6 +20,7 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private anuncioService = inject(AnuncioService);
+  private uploadService = inject(UploadService);
   private toast = inject(ToastService);
   private destroy$ = new Subject<void>();
 
@@ -32,6 +34,9 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
   // Categoria sugerida
   detectandoCategoria = false;
   categoriaSugerida: CategoriaSugerida | null = null;
+
+  // Upload de fotos
+  uploadandoFoto = new Set<number>();
 
   get fotos(): FormArray {
     return this.form.get('fotos') as FormArray;
@@ -135,6 +140,44 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
 
   adicionarFoto(): void {
     this.fotos.push(this.fb.control(''));
+  }
+
+  selecionarArquivo(index: number): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) this.fazerUpload(file, index);
+    };
+    input.click();
+  }
+
+  fazerUpload(file: File, index: number): void {
+    if (file.size > 5 * 1024 * 1024) {
+      this.toast.erro('Arquivo muito grande. Máximo 5MB.');
+      return;
+    }
+    this.uploadandoFoto.add(index);
+    this.uploadService.uploadImagem(file).subscribe({
+      next: ({ url }) => {
+        this.fotos.at(index).setValue(url);
+        this.uploadandoFoto.delete(index);
+        this.toast.sucesso('Foto carregada com sucesso!');
+      },
+      error: (err) => {
+        this.uploadandoFoto.delete(index);
+        this.toast.erro(err?.error?.erro ?? 'Erro ao fazer upload da foto.');
+      },
+    });
+  }
+
+  removerFoto(index: number): void {
+    if (this.fotos.length > 1) {
+      this.fotos.removeAt(index);
+    } else {
+      this.fotos.at(0).setValue('');
+    }
   }
 
   salvar(): void {
