@@ -87,6 +87,24 @@ async function montarAtributos(categoryId, titulo) {
   }
 }
 
+// Faz upload de uma foto para o CDN do ML e retorna o objeto de picture.
+// Se falhar, usa source como fallback (ML tenta baixar assincronamente).
+async function uploadFotoParaML(url) {
+  try {
+    const pic = await mlRequest('post', '/pictures', { source: url });
+    if (pic?.id) return { id: pic.id };
+  } catch {
+    // fallback silencioso
+  }
+  return { source: url };
+}
+
+async function uploadFotosParaML(fotos) {
+  const urls = (fotos || []).filter(u => u?.trim());
+  if (urls.length === 0) return [];
+  return Promise.all(urls.map(uploadFotoParaML));
+}
+
 // ── Casos de uso ───────────────────────────────────────────────────────────
 
 async function listar({ status, categoria, busca, pagina = 1, limite = 20 }) {
@@ -112,9 +130,10 @@ async function buscarPorId(id) {
 
 async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos, atributos }) {
   const categoryId = await detectarCategoria(titulo, categoria);
-  const [attributes, categoria_nome] = await Promise.all([
+  const [attributes, categoria_nome, pictures] = await Promise.all([
     montarAtributos(categoryId, titulo),
     buscarNomeCategoria(categoryId),
+    uploadFotosParaML(fotos),
   ]);
 
   const mlPayload = {
@@ -126,7 +145,7 @@ async function criar({ titulo, descricao, categoria, condicao, preco, estoque, f
     buying_mode: 'buy_it_now',
     listing_type_id: 'free',
     condition: condicao || 'new',
-    pictures: (fotos || []).filter(u => u?.trim()).map(u => ({ source: u })),
+    pictures,
     ...(attributes.length > 0 && { attributes }),
   };
 
