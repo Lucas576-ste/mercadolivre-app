@@ -96,6 +96,7 @@ export class ListagemComponent implements OnInit, OnDestroy {
   }
 
   alterandoStatus = new Set<string>();
+  excluindoId: string | null = null;
 
   abrirModalPreco(a: Anuncio): void { this.anuncioModalPreco = a; }
   abrirModalEstoque(a: Anuncio): void { this.anuncioModalEstoque = a; }
@@ -125,31 +126,48 @@ export class ListagemComponent implements OnInit, OnDestroy {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
+  excluir(a: Anuncio): void {
+    if (!confirm(`Excluir "${a.titulo}"?\n\nSe o anúncio estiver no Mercado Livre, ele será fechado automaticamente.`)) return;
+    this.excluindoId = a._id;
+    this.service.excluirAnuncio(a._id).subscribe({
+      next: () => {
+        this.excluindoId = null;
+        this.toast.sucesso('Anúncio excluído com sucesso.');
+        this.carregar();
+      },
+      error: (err) => {
+        this.excluindoId = null;
+        this.toast.erro(err?.error?.erro ?? 'Erro ao excluir anúncio.');
+      },
+    });
+  }
+
   labelCategoria(cat: string): string {
     const map: Record<string, string> = {
-      // ML category IDs (Brazil)
-      MLB1000: 'Eletrônicos, Áudio e Vídeo',
-      MLB1276: 'Informática',
-      MLB1144: 'Celulares e Telefones',
-      MLB5672: 'Esportes e Fitness',
-      MLB1574: 'Casa, Móveis e Decoração',
-      MLB1430: 'Moda e Acessórios',
-      MLB1743: 'Veículos e Peças',
-      MLB1499: 'Ferramentas e Construção',
-      MLB1648: 'Brinquedos e Hobbies',
-      MLB1051: 'Beleza e Cuidado Pessoal',
-      MLB1132: 'Livros, Revistas e Comics',
-      MLB1953: 'Alimentos e Bebidas',
-      MLB3937: 'Animais e Mascotas',
-      MLB1039: 'Arte, Artesanato e Costura',
-      MLB1168: 'Música e Shows',
-      // Legacy slug keys (backward compat)
-      eletronicos: 'Eletrônicos',
-      esportes: 'Esportes',
-      'casa-jardim': 'Casa e Jardim',
-      moda: 'Moda',
-      veiculos: 'Veículos',
-      outros: 'Outros',
+      MLB5672:   'Acessórios para Veículos',
+      MLB1403:   'Alimentos e Bebidas',
+      MLB1071:   'Animais',
+      MLB1367:   'Antiguidades e Coleções',
+      MLB1384:   'Bebês',
+      MLB1246:   'Beleza e Cuidado Pessoal',
+      MLB1132:   'Brinquedos e Hobbies',
+      MLB1430:   'Calçados, Roupas e Bolsas',
+      MLB1039:   'Câmeras e Acessórios',
+      MLB1743:   'Carros, Motos e Outros',
+      MLB1574:   'Casa, Móveis e Decoração',
+      MLB1051:   'Celulares e Telefones',
+      MLB1500:   'Construção',
+      MLB5726:   'Eletrodomésticos',
+      MLB1000:   'Eletrônicos, Áudio e Vídeo',
+      MLB1276:   'Esportes e Fitness',
+      MLB263532: 'Ferramentas',
+      MLB1648:   'Indústria e Comércio',
+      MLB1182:   'Informática',
+      MLB1499:   'Joias e Relógios',
+      MLB218519: 'Livros, Revistas e Comics',
+      MLB1168:   'Música',
+      MLB1613:   'Saúde',
+      MLB1294:   'Serviços',
     };
     return map[cat] ?? cat;
   }

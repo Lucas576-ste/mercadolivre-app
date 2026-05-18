@@ -249,6 +249,21 @@ async function sincronizar() {
   return { mensagem: 'Sincronização concluída.', sincronizados };
 }
 
+async function excluir(id) {
+  const anuncio = await AnuncioRepository.findById(id);
+  if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
+
+  if (anuncio.ml_id) {
+    try {
+      await mlRequest('put', `/items/${anuncio.ml_id}`, { status: 'closed' });
+    } catch (mlError) {
+      console.warn('Aviso: falha ao fechar no ML antes de excluir:', mlError.response?.data || mlError.message);
+    }
+  }
+
+  await AnuncioRepository.deleteById(id);
+}
+
 async function alterarStatus(id, status) {
   const statusValidos = ['active', 'paused'];
   if (!statusValidos.includes(status))
@@ -279,4 +294,4 @@ async function alterarStatus(id, status) {
   return atualizado;
 }
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus };
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir };

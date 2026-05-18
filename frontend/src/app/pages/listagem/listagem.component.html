@@ -30,18 +30,33 @@
 
       <!-- Categoria -->
       <select [(ngModel)]="categoriaFiltro" (change)="onFiltroChange()"
-              class="w-[160px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
+              class="w-[180px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
                      bg-white cursor-pointer outline-none focus:border-[#FFE600] transition-colors">
         <option value="">Todas as categorias</option>
-        <option value="MLB1000">Eletrônicos</option>
-        <option value="MLB1276">Informática</option>
-        <option value="MLB1144">Celulares</option>
-        <option value="MLB5672">Esportes</option>
-        <option value="MLB1574">Casa e Decoração</option>
-        <option value="MLB1430">Moda</option>
-        <option value="MLB1743">Veículos</option>
-        <option value="MLB1499">Ferramentas</option>
-        <option value="MLB1648">Brinquedos</option>
+        <option value="MLB5672">Acessórios para Veículos</option>
+        <option value="MLB1403">Alimentos e Bebidas</option>
+        <option value="MLB1071">Animais</option>
+        <option value="MLB1367">Antiguidades e Coleções</option>
+        <option value="MLB1384">Bebês</option>
+        <option value="MLB1246">Beleza e Cuidado Pessoal</option>
+        <option value="MLB1132">Brinquedos e Hobbies</option>
+        <option value="MLB1430">Calçados, Roupas e Bolsas</option>
+        <option value="MLB1039">Câmeras e Acessórios</option>
+        <option value="MLB1743">Carros, Motos e Outros</option>
+        <option value="MLB1574">Casa, Móveis e Decoração</option>
+        <option value="MLB1051">Celulares e Telefones</option>
+        <option value="MLB1500">Construção</option>
+        <option value="MLB5726">Eletrodomésticos</option>
+        <option value="MLB1000">Eletrônicos, Áudio e Vídeo</option>
+        <option value="MLB1276">Esportes e Fitness</option>
+        <option value="MLB263532">Ferramentas</option>
+        <option value="MLB1648">Indústria e Comércio</option>
+        <option value="MLB1182">Informática</option>
+        <option value="MLB1499">Joias e Relógios</option>
+        <option value="MLB218519">Livros, Revistas e Comics</option>
+        <option value="MLB1168">Música</option>
+        <option value="MLB1613">Saúde</option>
+        <option value="MLB1294">Serviços</option>
       </select>
 
       <!-- Sincronizar -->
@@ -151,6 +166,10 @@
                          title="Reativar anúncio"
                          (click)="alterarStatus(a)"></i>
                     }
+                    <i class="fa-solid fa-trash text-[14px] cursor-pointer p-1 transition-colors"
+                       [class]="excluindoId === a._id ? 'text-[#d1d5db] cursor-not-allowed' : 'text-[#ef4444] hover:text-[#b91c1c]'"
+                       title="Excluir anúncio"
+                       (click)="excluir(a)"></i>
                   </div>
                 </td>
               </tr>

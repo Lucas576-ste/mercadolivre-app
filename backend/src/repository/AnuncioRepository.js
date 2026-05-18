@@ -34,6 +34,10 @@ async function upsertByMlId(mlId, data) {
   );
 }
 
+async function deleteById(id) {
+  return Anuncio.findByIdAndDelete(id);
+}
+
 async function adicionarCampoVersaoSeAusente() {
   return Anuncio.updateMany(
     { versao: { $exists: false } },
@@ -41,4 +45,4 @@ async function adicionarCampoVersaoSeAusente() {
   );
 }
 
-module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId, adicionarCampoVersaoSeAusente };
+module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId, deleteById, adicionarCampoVersaoSeAusente };

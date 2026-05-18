@@ -38,4 +38,9 @@ const alterarStatus = asyncHandler(async (req, res) => {
   res.json(await anuncioService.alterarStatus(req.params.id, status));
 });
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus };
+const excluir = asyncHandler(async (req, res) => {
+  await anuncioService.excluir(req.params.id);
+  res.status(204).send();
+});
+
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir };

@@ -111,4 +111,8 @@ export class AnuncioService {
   alterarStatus(id: string, status: 'active' | 'paused'): Observable<Anuncio> {
     return this.http.patch<Anuncio>(`${this.base}/${id}/status`, { status });
   }
+
+  excluirAnuncio(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
 }
