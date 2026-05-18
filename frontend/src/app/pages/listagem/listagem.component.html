@@ -33,6 +33,9 @@
               class="w-[180px] px-[14px] py-[10px] border border-[#e5e7eb] rounded-lg text-[14px]
                      bg-white cursor-pointer outline-none focus:border-[#FFE600] transition-colors">
         <option value="">Todas as categorias</option>
+        @for (c of categoriasExtras; track c.id) {
+          <option [value]="c.id">{{ c.nome }}</option>
+        }
         <option value="MLB5672">Acessórios para Veículos</option>
         <option value="MLB1403">Alimentos e Bebidas</option>
         <option value="MLB1071">Animais</option>

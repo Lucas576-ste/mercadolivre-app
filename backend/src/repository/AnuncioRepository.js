@@ -38,6 +38,14 @@ async function deleteById(id) {
   return Anuncio.findByIdAndDelete(id);
 }
 
+async function findDistinctCategorias() {
+  return Anuncio.aggregate([
+    { $group: { _id: '$categoria', nome: { $first: '$categoria_nome' } } },
+    { $project: { _id: 0, id: '$_id', nome: 1 } },
+    { $sort: { nome: 1 } },
+  ]);
+}
+
 async function adicionarCampoVersaoSeAusente() {
   return Anuncio.updateMany(
     { versao: { $exists: false } },
@@ -45,4 +53,4 @@ async function adicionarCampoVersaoSeAusente() {
   );
 }
 
-module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId, deleteById, adicionarCampoVersaoSeAusente };
+module.exports = { findAll, count, findById, create, updateWithLock, upsertByMlId, deleteById, findDistinctCategorias, adicionarCampoVersaoSeAusente };

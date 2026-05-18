@@ -28,6 +28,15 @@ export class ListagemComponent implements OnInit, OnDestroy {
   carregando = false;
   sincronizando = false;
 
+  categoriasExtras: { id: string; nome: string }[] = [];
+
+  private readonly CATEGORIAS_ESTATICAS = new Set([
+    'MLB5672','MLB1403','MLB1071','MLB1367','MLB1384','MLB1246','MLB1132',
+    'MLB1430','MLB1039','MLB1743','MLB1574','MLB1051','MLB1500','MLB5726',
+    'MLB1000','MLB1276','MLB263532','MLB1648','MLB1182','MLB1499',
+    'MLB218519','MLB1168','MLB1613','MLB1294',
+  ]);
+
   termoBusca = '';
   statusFiltro = '';
   categoriaFiltro = '';
@@ -60,6 +69,7 @@ export class ListagemComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(() => { this.paginaAtual = 1; this.carregar(); });
     this.carregar();
+    this.carregarCategorias();
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
@@ -146,6 +156,17 @@ export class ListagemComponent implements OnInit, OnDestroy {
         this.excluindoId = null;
         this.toast.erro(err?.error?.erro ?? 'Erro ao excluir anúncio.');
       },
+    });
+  }
+
+  private carregarCategorias(): void {
+    this.service.listarCategorias().subscribe({
+      next: (cats) => {
+        this.categoriasExtras = cats
+          .filter(c => !this.CATEGORIAS_ESTATICAS.has(c.id))
+          .map(c => ({ id: c.id, nome: c.nome || c.id }));
+      },
+      error: () => {},
     });
   }
 

@@ -11,11 +11,13 @@ const {
   sincronizar,
   alterarStatus,
   excluir,
+  listarCategorias,
 } = require('../controller/anuncio.controller');
 
 router.use(authMiddleware);
 
 router.get('/', listar);
+router.get('/categorias', listarCategorias);
 router.post('/sincronizar', sincronizar);
 router.get('/:id', buscarPorId);
 router.post('/', criar);

@@ -43,4 +43,8 @@ const excluir = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir };
+const listarCategorias = asyncHandler(async (req, res) => {
+  res.json(await anuncioService.listarCategorias());
+});
+
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir, listarCategorias };

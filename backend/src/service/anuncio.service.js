@@ -325,4 +325,8 @@ async function alterarStatus(id, status) {
   return atualizado;
 }
 
-module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir };
+async function listarCategorias() {
+  return AnuncioRepository.findDistinctCategorias();
+}
+
+module.exports = { listar, buscarPorId, criar, editar, atualizarPreco, atualizarEstoque, sincronizar, alterarStatus, excluir, listarCategorias };

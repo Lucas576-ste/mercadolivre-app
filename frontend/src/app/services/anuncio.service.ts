@@ -117,4 +117,8 @@ export class AnuncioService {
   excluirAnuncio(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
+
+  listarCategorias(): Observable<{ id: string; nome: string | null }[]> {
+    return this.http.get<{ id: string; nome: string | null }[]>(`${this.base}/categorias`);
+  }
 }
