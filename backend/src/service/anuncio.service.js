@@ -312,7 +312,7 @@ async function sincronizar() {
       continue;
     }
 
-    const itensValidos = detalhes.filter(item => item.code === 200);
+    const itensValidos = detalhes.filter(item => item.code === 200 && item.body.status !== 'closed');
     const categoryIds = [...new Set(itensValidos.map(item => item.body.category_id))];
     const nomesPorCategoria = {};
     await Promise.all(categoryIds.map(async (catId) => {
