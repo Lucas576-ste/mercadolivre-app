@@ -183,17 +183,21 @@ async function atualizarPreco(id, preco) {
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
-  if (anuncio.ml_id && anuncio.status !== 'closed') {
+  if (anuncio.ml_id) {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, {
         price: Number(preco),
         available_quantity: anuncio.estoque,
       });
     } catch (mlError) {
-      throw new MercadoLivreException(
-        'Erro ao atualizar preço no Mercado Livre.',
-        mlError.response?.data || mlError.message
-      );
+      const itemFechado = mlError.response?.data?.message?.includes('status:closed');
+      if (!itemFechado) {
+        throw new MercadoLivreException(
+          'Erro ao atualizar preço no Mercado Livre.',
+          mlError.response?.data || mlError.message
+        );
+      }
+      console.warn(`[ML] Item ${anuncio.ml_id} fechado — preço atualizado apenas localmente.`);
     }
   }
 
@@ -209,14 +213,18 @@ async function atualizarEstoque(id, estoque) {
   const anuncio = await AnuncioRepository.findById(id);
   if (!anuncio) throw new NotFoundException('Anúncio não encontrado.');
 
-  if (anuncio.ml_id && anuncio.status !== 'closed') {
+  if (anuncio.ml_id) {
     try {
       await mlRequest('put', `/items/${anuncio.ml_id}`, { available_quantity: Number(estoque) });
     } catch (mlError) {
-      throw new MercadoLivreException(
-        'Erro ao atualizar estoque no Mercado Livre.',
-        mlError.response?.data || mlError.message
-      );
+      const itemFechado = mlError.response?.data?.message?.includes('status:closed');
+      if (!itemFechado) {
+        throw new MercadoLivreException(
+          'Erro ao atualizar estoque no Mercado Livre.',
+          mlError.response?.data || mlError.message
+        );
+      }
+      console.warn(`[ML] Item ${anuncio.ml_id} fechado — estoque atualizado apenas localmente.`);
     }
   }
 
