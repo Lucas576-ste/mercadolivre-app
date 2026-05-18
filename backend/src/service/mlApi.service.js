@@ -1,5 +1,6 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
+const FormData = require('form-data');
 const TokenRepository = require('../repository/TokenRepository');
 const UnauthorizedException = require('../domain/exception/UnauthorizedException');
 
@@ -64,4 +65,31 @@ async function mlPublicRequest(path) {
   return response.data;
 }
 
-module.exports = { mlRequest, mlPublicRequest, getValidToken, refreshAccessToken };
+// Baixa uma imagem de uma URL externa e faz upload binário para o CDN do ML.
+// Retorna { id } se bem-sucedido ou null se falhar.
+async function mlUploadFoto(url) {
+  try {
+    const imgRes = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
+    const buffer = Buffer.from(imgRes.data);
+    const contentType = imgRes.headers['content-type'] || 'image/jpeg';
+    const ext = contentType.split('/')[1]?.split(';')[0] || 'jpg';
+
+    const form = new FormData();
+    form.append('file', buffer, { filename: `photo.${ext}`, contentType });
+
+    const token = await getValidToken();
+    const response = await mlClient({
+      method: 'post',
+      url: '/pictures/items/upload',
+      headers: { Authorization: `Bearer ${token.access_token}`, ...form.getHeaders() },
+      data: form,
+    });
+
+    return response.data?.id ? { id: response.data.id } : null;
+  } catch (e) {
+    console.warn('[ML] Falha ao fazer upload de foto:', e.message);
+    return null;
+  }
+}
+
+module.exports = { mlRequest, mlPublicRequest, getValidToken, refreshAccessToken, mlUploadFoto };

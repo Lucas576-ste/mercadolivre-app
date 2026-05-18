@@ -1,6 +1,6 @@
 const AnuncioRepository      = require('../repository/AnuncioRepository');
 const TokenRepository        = require('../repository/TokenRepository');
-const { mlRequest, mlPublicRequest } = require('./mlApi.service');
+const { mlRequest, mlPublicRequest, mlUploadFoto } = require('./mlApi.service');
 const NotFoundException      = require('../domain/exception/NotFoundException');
 const ConflictException      = require('../domain/exception/ConflictException');
 const MercadoLivreException  = require('../domain/exception/MercadoLivreException');
@@ -87,22 +87,12 @@ async function montarAtributos(categoryId, titulo) {
   }
 }
 
-// Faz upload de uma foto para o CDN do ML e retorna o objeto de picture.
-// Se falhar, usa source como fallback (ML tenta baixar assincronamente).
-async function uploadFotoParaML(url) {
-  try {
-    const pic = await mlRequest('post', '/pictures', { source: url });
-    if (pic?.id) return { id: pic.id };
-  } catch {
-    // fallback silencioso
-  }
-  return { source: url };
-}
-
 async function uploadFotosParaML(fotos) {
   const urls = (fotos || []).filter(u => u?.trim());
   if (urls.length === 0) return [];
-  return Promise.all(urls.map(uploadFotoParaML));
+  const results = await Promise.all(urls.map(mlUploadFoto));
+  // Filtra apenas as que tiveram upload bem-sucedido (retornaram { id })
+  return results.filter(Boolean);
 }
 
 // ── Casos de uso ───────────────────────────────────────────────────────────
