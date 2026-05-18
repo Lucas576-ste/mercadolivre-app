@@ -27,4 +27,18 @@ async function sugerirCategoria(titulo) {
   return { category_id, category_name, atributos };
 }
 
-module.exports = { sugerirCategoria };
+async function buscarAtributos(categoryId) {
+  const attrs = await mlPublicRequest(`/categories/${categoryId}/attributes`);
+  return attrs
+    .filter(a => a.tags?.required)
+    .map(a => ({
+      id: a.id,
+      nome: a.name,
+      tipo: a.value_type,
+      valores: a.values?.length > 0
+        ? a.values.map(v => ({ id: v.id, nome: v.name }))
+        : null,
+    }));
+}
+
+module.exports = { sugerirCategoria, buscarAtributos };

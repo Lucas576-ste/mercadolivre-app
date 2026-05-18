@@ -3,6 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface AtributoValor {
+  id: string;
+  value_id?: string;
+  value_name: string;
+}
+
 export interface AnuncioPayload {
   titulo: string;
   descricao?: string;
@@ -11,6 +17,7 @@ export interface AnuncioPayload {
   preco: number;
   estoque: number;
   fotos?: string[];
+  atributos?: AtributoValor[];
 }
 
 export interface Anuncio extends AnuncioPayload {
@@ -95,6 +102,10 @@ export class AnuncioService {
   sugerirCategoria(titulo: string): Observable<CategoriaSugerida> {
     const params = new HttpParams().set('titulo', titulo);
     return this.http.get<CategoriaSugerida>(`${this.categoriasBase}/sugerir`, { params });
+  }
+
+  buscarAtributos(categoryId: string): Observable<AtributoSugerido[]> {
+    return this.http.get<AtributoSugerido[]>(`${this.categoriasBase}/${categoryId}/atributos`);
   }
 
   alterarStatus(id: string, status: 'active' | 'paused'): Observable<Anuncio> {

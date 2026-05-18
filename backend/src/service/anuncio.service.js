@@ -65,9 +65,11 @@ async function buscarPorId(id) {
   return anuncio;
 }
 
-async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos }) {
+async function criar({ titulo, descricao, categoria, condicao, preco, estoque, fotos, atributos }) {
   const categoryId = await detectarCategoria(titulo, categoria);
-  const attributes = await montarAtributos(categoryId, titulo);
+  const attributes = (atributos && atributos.length > 0)
+    ? atributos
+    : await montarAtributos(categoryId, titulo);
 
   const mlPayload = {
     title: titulo,

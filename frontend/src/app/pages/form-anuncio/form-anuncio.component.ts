@@ -4,7 +4,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
-import { AnuncioService, AtributoSugerido, CategoriaSugerida } from '../../services/anuncio.service';
+import { AnuncioService, AtributoSugerido, AtributoValor, CategoriaSugerida } from '../../services/anuncio.service';
 import { ToastService } from '../../services/toast.service';
 import { UploadService } from '../../services/upload.service';
 
@@ -35,25 +35,98 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
   detectandoCategoria = false;
   categoriaSugerida: CategoriaSugerida | null = null;
 
+  // Atributos editáveis
+  atributosValores: Record<string, string> = {};
+  carregandoAtributos = false;
+
   // Upload de fotos
   uploadandoFoto = new Set<number>();
 
-  get fotos(): FormArray {
-    return this.form.get('fotos') as FormArray;
+  // ── Título feedback ───────────────────────────────────────────────────────
+  private readonly TITULO_IDEAL_MAX = 60;
+  private readonly TITULO_MAX = 60;
+  private readonly TITULO_CHARS_PROIBIDOS = /["<>]/;
+
+  get tituloLength(): number {
+    return (this.form.get('titulo')?.value as string)?.length ?? 0;
   }
 
-  get fotosPlaceholders(): string[] {
-    return this.fotos.controls.map((_, i) => `https://exemplo.com/foto${i + 1}.jpg`);
+  get tituloCorContador(): string {
+    const len = this.tituloLength;
+    if (len === 0) return '#9ca3af';
+    if (len < 15) return '#f59e0b';
+    if (len <= this.TITULO_IDEAL_MAX) return '#10b981';
+    return '#f59e0b';
+  }
+
+  get tituloCurto(): boolean {
+    const len = this.tituloLength;
+    return len > 0 && len < 15;
+  }
+
+  get tituloTemCaracterProibido(): boolean {
+    const v = this.form.get('titulo')?.value as string ?? '';
+    return this.TITULO_CHARS_PROIBIDOS.test(v);
+  }
+
+  // ── Atributos ──────────────────────────────────────────────────────────────
+  get fotos(): FormArray {
+    return this.form.get('fotos') as FormArray;
   }
 
   get atributos(): AtributoSugerido[] {
     return this.categoriaSugerida?.atributos ?? [];
   }
 
+  get atributosPreenchidos(): boolean {
+    return this.atributos.every(a => (this.atributosValores[a.id] ?? '').trim() !== '');
+  }
+
   resumoValores(attr: AtributoSugerido): string {
     if (!attr.valores || attr.valores.length === 0) return '';
     const nomes = attr.valores.slice(0, 3).map(v => v.nome).join(', ');
     return attr.valores.length > 3 ? `${nomes}...` : nomes;
+  }
+
+  setValorAtributo(id: string, value: string): void {
+    this.atributosValores = { ...this.atributosValores, [id]: value };
+  }
+
+  private preencherDefaults(attrs: AtributoSugerido[]): void {
+    const novos: Record<string, string> = { ...this.atributosValores };
+    for (const a of attrs) {
+      if (!novos[a.id]) {
+        if (a.valores && a.valores.length > 0) {
+          novos[a.id] = a.valores[0].id;
+        } else {
+          novos[a.id] = '';
+        }
+      }
+    }
+    this.atributosValores = novos;
+  }
+
+  carregarAtributosPorCategoria(categoryId: string): void {
+    if (!categoryId) {
+      this.categoriaSugerida = null;
+      this.atributosValores = {};
+      return;
+    }
+    this.carregandoAtributos = true;
+    this.anuncioService.buscarAtributos(categoryId).subscribe({
+      next: (attrs) => {
+        this.categoriaSugerida = {
+          category_id: categoryId,
+          category_name: null,
+          atributos: attrs,
+        };
+        this.preencherDefaults(attrs);
+        this.carregandoAtributos = false;
+      },
+      error: () => {
+        this.carregandoAtributos = false;
+      },
+    });
   }
 
   ngOnInit(): void {
@@ -80,6 +153,16 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Carrega atributos quando usuário muda categoria manualmente
+    this.form.get('categoria')!.valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+    ).subscribe((categoryId: string) => {
+      if (categoryId && !this.detectandoCategoria) {
+        this.carregarAtributosPorCategoria(categoryId);
+      }
+    });
+
     this.anuncioId = this.route.snapshot.paramMap.get('id');
     if (this.anuncioId) {
       this.editando = true;
@@ -99,8 +182,9 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
         this.detectandoCategoria = false;
         if (res.category_id) {
           this.categoriaSugerida = res;
-          // Pré-seleciona a categoria no dropdown
-          this.form.get('categoria')!.setValue(res.category_id);
+          this.preencherDefaults(res.atributos);
+          // Pré-seleciona a categoria no dropdown (silencia o valueChanges para não recarregar attrs)
+          this.form.get('categoria')!.setValue(res.category_id, { emitEvent: false });
         } else {
           this.categoriaSugerida = null;
         }
@@ -190,9 +274,20 @@ export class FormAnuncioComponent implements OnInit, OnDestroy {
     this.erro = '';
 
     const raw = this.form.value;
+
+    const atributos: AtributoValor[] = this.atributos.map(a => {
+      const val = this.atributosValores[a.id] ?? '';
+      if (a.tipo === 'list' && a.valores) {
+        const v = a.valores.find(x => x.id === val);
+        return { id: a.id, value_id: val, value_name: v?.nome ?? val };
+      }
+      return { id: a.id, value_name: val };
+    }).filter(a => a.value_name || a.value_id);
+
     const payload = {
       ...raw,
       fotos: (raw.fotos as string[]).filter((u: string) => u.trim() !== ''),
+      ...(atributos.length > 0 && { atributos }),
     };
 
     const req = this.editando && this.anuncioId

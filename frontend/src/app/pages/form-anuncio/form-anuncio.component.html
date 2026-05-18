@@ -51,6 +51,21 @@
                   <p class="text-red-500 text-[12px] -mt-4 mb-4">Título é obrigatório.</p>
                 }
 
+                <!-- Contador de caracteres -->
+                @if (form.get('titulo')?.value) {
+                  <div class="flex items-center gap-3 -mt-3 mb-3">
+                    <span class="text-[12px] font-medium" [style.color]="tituloCorContador">
+                      {{ tituloLength }}/{{ 60 }} caracteres
+                    </span>
+                    @if (tituloCurto) {
+                      <span class="text-[11px] text-amber-500">Título muito curto — seja mais descritivo</span>
+                    }
+                    @if (tituloTemCaracterProibido) {
+                      <span class="text-[11px] text-red-500">Evite usar aspas ou os caracteres &lt; &gt;</span>
+                    }
+                  </div>
+                }
+
                 <!-- Indicador de detecção de categoria -->
                 @if (detectandoCategoria) {
                   <div class="categoria-badge categoria-badge--loading">
@@ -115,23 +130,42 @@
                   <p class="text-red-500 text-[12px] -mt-4 mb-4">Selecione uma categoria.</p>
                 }
 
-                <!-- Atributos obrigatórios detectados -->
-                @if (atributos.length > 0) {
-                  <div class="atributos-info">
-                    <p class="atributos-info__titulo">Atributos obrigatórios da categoria:</p>
-                    <ul class="atributos-info__lista">
-                      @for (attr of atributos; track attr.id) {
-                        <li>
-                          <span class="atributos-info__nome">{{ attr.nome }}</span>
-                          @if (attr.valores && attr.valores.length > 0) {
-                            <span class="atributos-info__valores">
-                              ({{ resumoValores(attr) }})
-                            </span>
-                          }
-                        </li>
-                      }
-                    </ul>
-                    <p class="atributos-info__nota">Esses atributos serão preenchidos automaticamente ao criar o anúncio.</p>
+                <!-- Atributos obrigatórios editáveis -->
+                @if (carregandoAtributos) {
+                  <div class="flex items-center gap-2 mt-2 text-[13px] text-[#6b7280]">
+                    <i class="fa-solid fa-circle-notch fa-spin text-[12px]"></i>
+                    Carregando campos da categoria...
+                  </div>
+                }
+                @if (!carregandoAtributos && atributos.length > 0) {
+                  <div class="mt-3 flex flex-col gap-3">
+                    <p class="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">
+                      Informações obrigatórias da categoria
+                    </p>
+                    @for (attr of atributos; track attr.id) {
+                      <div>
+                        <label class="field-label">{{ attr.nome }}</label>
+                        @if (attr.valores && attr.valores.length > 0) {
+                          <select
+                            class="field-input"
+                            [value]="atributosValores[attr.id] ?? ''"
+                            (change)="setValorAtributo(attr.id, $any($event.target).value)"
+                          >
+                            @for (v of attr.valores; track v.id) {
+                              <option [value]="v.id">{{ v.nome }}</option>
+                            }
+                          </select>
+                        } @else {
+                          <input
+                            [type]="attr.tipo === 'number' ? 'number' : 'text'"
+                            class="field-input"
+                            [value]="atributosValores[attr.id] ?? ''"
+                            (input)="setValorAtributo(attr.id, $any($event.target).value)"
+                            [placeholder]="attr.nome"
+                          />
+                        }
+                      </div>
+                    }
                   </div>
                 }
               </div>

@@ -8,4 +8,10 @@ const sugerirCategoria = asyncHandler(async (req, res) => {
   res.json(await categoriaService.sugerirCategoria(titulo.trim()));
 });
 
-module.exports = { sugerirCategoria };
+const buscarAtributos = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new ValidationException('ID da categoria é obrigatório.');
+  res.json(await categoriaService.buscarAtributos(id));
+});
+
+module.exports = { sugerirCategoria, buscarAtributos };
